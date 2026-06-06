@@ -7,9 +7,42 @@ import os
 import json
 import uuid
 import re
-import threading
+import time
 from datetime import datetime
 from copy import deepcopy
+
+class ProcessFileLock:
+    """A simple cross-platform, cross-process lock using atomic directory creation."""
+    def __init__(self, lock_path):
+        self.lock_path = lock_path
+
+    def acquire(self, timeout=10):
+        start = time.time()
+        while True:
+            try:
+                os.mkdir(self.lock_path)
+                return True
+            except FileExistsError:
+                if time.time() - start > timeout:
+                    try:
+                        os.rmdir(self.lock_path)
+                    except OSError:
+                        pass
+                else:
+                    time.sleep(0.05)
+
+    def release(self):
+        try:
+            os.rmdir(self.lock_path)
+        except OSError:
+            pass
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()
 
 
 class FileObjectId:
@@ -43,7 +76,7 @@ class FileCollection:
     def __init__(self, db_path, name):
         self.name = name
         self.file_path = os.path.join(db_path, f"{name}.json")
-        self._lock = threading.Lock()
+        self._lock = ProcessFileLock(self.file_path + ".lock")
         self._ensure_file()
 
     def _ensure_file(self):
