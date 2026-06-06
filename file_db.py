@@ -107,6 +107,25 @@ class FileCollection:
 
             if isinstance(condition, dict):
                 for op, op_val in condition.items():
+                    # Helper for safe comparison
+                    def safe_cmp(v1, v2, cmp_op):
+                        if v1 is None:
+                            return False
+                        if type(v1) != type(v2):
+                            if isinstance(v1, str) and isinstance(v2, datetime):
+                                try:
+                                    v1 = datetime.fromisoformat(v1.replace('Z', '+00:00')[:19])
+                                except ValueError:
+                                    pass
+                        try:
+                            if cmp_op == ">=": return v1 >= v2
+                            if cmp_op == "<=": return v1 <= v2
+                            if cmp_op == "<": return v1 < v2
+                            if cmp_op == ">": return v1 > v2
+                        except TypeError:
+                            return False
+                        return False
+
                     if op == "$regex":
                         flags = 0
                         if isinstance(condition.get("$options", ""), str) and "i" in condition.get("$options", ""):
@@ -114,16 +133,16 @@ class FileCollection:
                         if value is None or not re.search(op_val, str(value), flags):
                             return False
                     elif op == "$gte":
-                        if value is None or value < op_val:
+                        if not safe_cmp(value, op_val, ">="):
                             return False
                     elif op == "$lte":
-                        if value is None or value > op_val:
+                        if not safe_cmp(value, op_val, "<="):
                             return False
                     elif op == "$lt":
-                        if value is None or value >= op_val:
+                        if not safe_cmp(value, op_val, "<"):
                             return False
                     elif op == "$gt":
-                        if value is None or value <= op_val:
+                        if not safe_cmp(value, op_val, ">"):
                             return False
                     elif op == "$ne":
                         if isinstance(op_val, FileObjectId):
