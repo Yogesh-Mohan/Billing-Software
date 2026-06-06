@@ -116,13 +116,17 @@ def login():
             return render_template('login.html')
             
         user = db.users.find_one({"username": username})
-        # Fix #1: user['password'] from MongoDB is already bytes, don't call .encode()
-        stored_pw = user['password'] if isinstance(user['password'], bytes) else user['password'].encode('utf-8')
-        if user and bcrypt.checkpw(password.encode('utf-8'), stored_pw):
-            session['logged_in'] = True
-            session['username'] = username
-            flash('Welcome back to RED STUDIO!', 'success')
-            return redirect(url_for('dashboard'))
+        
+        if user:
+            # Fix #1: user['password'] from MongoDB is already bytes, don't call .encode()
+            stored_pw = user['password'] if isinstance(user['password'], bytes) else user['password'].encode('utf-8')
+            if bcrypt.checkpw(password.encode('utf-8'), stored_pw):
+                session['logged_in'] = True
+                session['username'] = username
+                flash('Welcome back to RED STUDIO!', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid username or password.', 'danger')
         else:
             flash('Invalid username or password.', 'danger')
             
