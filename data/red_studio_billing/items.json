@@ -1,0 +1,50 @@
+[
+  {
+    "_id": "6a226b4b03ed29cb9cb8722f",
+    "item_code": "112",
+    "item_name": "112",
+    "description": "",
+    "quantity": "",
+    "price": 45.0,
+    "tax": "GST 5%",
+    "manage_stock": false,
+    "current_qty": 0,
+    "ideal_qty": 0,
+    "warning_qty": 0,
+    "supplier": "Local Vendor",
+    "note": "",
+    "created_at": "2026-06-05T06:23:07.535Z"
+  },
+  {
+    "_id": "6a22e310f699b195d87df43b",
+    "item_code": "12*18",
+    "item_name": "12*18",
+    "description": "format",
+    "quantity": "",
+    "price": 200.0,
+    "tax": "",
+    "manage_stock": false,
+    "current_qty": 0,
+    "ideal_qty": 0,
+    "warning_qty": 0,
+    "supplier": "",
+    "note": "",
+    "created_at": "2026-06-05T14:54:08.194Z"
+  },
+  {
+    "_id": "6a22fc30f2c9852981b14a6b",
+    "item_code": "12*15",
+    "item_name": "12*15",
+    "description": "frames",
+    "quantity": "",
+    "price": 500.0,
+    "tax": "",
+    "manage_stock": false,
+    "current_qty": 0,
+    "ideal_qty": 0,
+    "warning_qty": 0,
+    "supplier": "",
+    "note": "",
+    "created_at": "2026-06-05T16:41:20.216Z"
+  }
+]

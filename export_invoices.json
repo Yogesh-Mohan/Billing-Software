@@ -1,0 +1,258 @@
+[
+  {
+    "_id": {
+      "$oid": "6a226f62304a24ebc0952759"
+    },
+    "invoice_number": "10000",
+    "invoice_date": {
+      "$date": "2026-06-05T00:00:00Z"
+    },
+    "due_date": {
+      "$date": "2026-07-05T00:00:00Z"
+    },
+    "payment_terms": "Due on Receipt",
+    "payment_days": "30",
+    "po_number": "123",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": {
+        "$oid": "6a226f62304a24ebc0952758"
+      },
+      "name": "Yogesh Wara kannan",
+      "phone": "",
+      "email": "",
+      "address": "yogi address"
+    },
+    "items": [
+      {
+        "product_id": {
+          "$oid": "6a226b7b03ed29cb9cb87230"
+        },
+        "product_name": "cam",
+        "product_code": "112",
+        "description": "cam",
+        "quantity": 1,
+        "price": 45.0,
+        "subtotal": 45.0
+      }
+    ],
+    "subtotal": 45.0,
+    "tax_rate": 18.0,
+    "tax_amount": 8.1,
+    "grand_total": 53.1,
+    "created_at": {
+      "$date": "2026-06-05T06:40:34.330Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6a228073e879b98dc8efefb1"
+    },
+    "invoice_number": "10001",
+    "invoice_date": {
+      "$date": "2026-06-05T00:00:00Z"
+    },
+    "due_date": {
+      "$date": "2026-07-05T00:00:00Z"
+    },
+    "payment_terms": "Pay in Days",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": {
+        "$oid": "6a228073e879b98dc8efefb0"
+      },
+      "name": "yogi",
+      "phone": "",
+      "email": "",
+      "address": "vhjhk"
+    },
+    "items": [
+      {
+        "product_id": {
+          "$oid": "6a218e227697001ed7ec2df8"
+        },
+        "product_name": "SD Card 128GB High Speed",
+        "product_code": "SD-128GB",
+        "description": "SD Card 128GB High Speed",
+        "quantity": 1,
+        "price": 2200.0,
+        "subtotal": 2200.0
+      }
+    ],
+    "subtotal": 2200.0,
+    "tax_rate": 18.0,
+    "tax_amount": 396.0,
+    "grand_total": 2596.0,
+    "created_at": {
+      "$date": "2026-06-05T07:53:23.289Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6a22df6e8f763bd4974f2aeb"
+    },
+    "invoice_number": "10002",
+    "invoice_date": {
+      "$date": "2026-06-05T00:00:00Z"
+    },
+    "due_date": {
+      "$date": "2026-07-05T00:00:00Z"
+    },
+    "payment_terms": "Pay in Days",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": {
+        "$oid": "6a22df6e8f763bd4974f2aea"
+      },
+      "name": "hkh",
+      "phone": "",
+      "email": "",
+      "address": "uhio"
+    },
+    "items": [
+      {
+        "product_id": {
+          "$oid": "6a218e227697001ed7ec2df8"
+        },
+        "product_name": "SD Card 128GB High Speed",
+        "product_code": "SD-128GB",
+        "description": "SD Card 128GB High Speed",
+        "quantity": 1,
+        "price": 2200.0,
+        "subtotal": 2200.0
+      }
+    ],
+    "subtotal": 2200.0,
+    "tax_rate": 18.0,
+    "tax_amount": 396.0,
+    "grand_total": 2596.0,
+    "created_at": {
+      "$date": "2026-06-05T14:38:38.110Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6a22f7a1f2c9852981b14a68"
+    },
+    "invoice_number": "10003",
+    "invoice_date": {
+      "$date": "2026-06-05T00:00:00Z"
+    },
+    "due_date": {
+      "$date": "2026-06-20T00:00:00Z"
+    },
+    "payment_terms": "Pay in Days",
+    "payment_days": "15",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "sriram street",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": {
+        "$oid": "6a22f7a1f2c9852981b14a67"
+      },
+      "name": "Yogesh Wara kannan",
+      "phone": "",
+      "email": "",
+      "address": "mani strret"
+    },
+    "items": [
+      {
+        "product_id": {
+          "$oid": "6a226b4b03ed29cb9cb8722f"
+        },
+        "product_name": "112",
+        "product_code": "112",
+        "description": "112",
+        "quantity": 1,
+        "price": 45.0,
+        "subtotal": 45.0
+      }
+    ],
+    "subtotal": 45.0,
+    "tax_rate": 18.0,
+    "tax_amount": 8.1,
+    "grand_total": 53.1,
+    "created_at": {
+      "$date": "2026-06-05T16:21:53.397Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6a22fc0ef2c9852981b14a6a"
+    },
+    "invoice_number": "10004",
+    "invoice_date": {
+      "$date": "2026-06-05T00:00:00Z"
+    },
+    "due_date": {
+      "$date": "2027-10-18T00:00:00Z"
+    },
+    "payment_terms": "Pay in Days",
+    "payment_days": "500",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "8, Vakkil Nagalingam St\r\nGobilthankavelu",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": {
+        "$oid": "6a22fc0ef2c9852981b14a69"
+      },
+      "name": "sriram",
+      "phone": "",
+      "email": "",
+      "address": "mani strret"
+    },
+    "items": [
+      {
+        "product_id": {
+          "$oid": "6a226b4b03ed29cb9cb8722f"
+        },
+        "product_name": "112",
+        "product_code": "112",
+        "description": "112",
+        "quantity": 1,
+        "price": 45.0,
+        "subtotal": 45.0
+      },
+      {
+        "product_id": {
+          "$oid": "6a22e310f699b195d87df43b"
+        },
+        "product_name": "12*18",
+        "product_code": "12*18",
+        "description": "format",
+        "quantity": 1,
+        "price": 200.0,
+        "subtotal": 200.0
+      }
+    ],
+    "subtotal": 245.0,
+    "tax_rate": 18.0,
+    "tax_amount": 44.1,
+    "grand_total": 289.1,
+    "created_at": {
+      "$date": "2026-06-05T16:40:46.402Z"
+    }
+  }
+]

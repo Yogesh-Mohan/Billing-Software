@@ -1,0 +1,12 @@
+[
+  {
+    "_id": {
+      "$oid": "6a218e207697001ed7ec2df1"
+    },
+    "username": "admin",
+    "password": "$2b$12$nOrT3VmcbjP5KcDo1myR..n7OZQk0yjQ2kBvOLjGvUfKzMNHeaFEy",
+    "created_at": {
+      "$date": "2026-06-04T14:39:28.563Z"
+    }
+  }
+]
