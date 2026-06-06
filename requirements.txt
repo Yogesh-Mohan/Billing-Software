@@ -9,3 +9,4 @@ bcrypt==4.1.2
 # PDF generation - required for invoice download feature
 # Install manually if missing: pip install reportlab==4.0.9
 reportlab==4.0.9
+gunicorn==21.2.0
