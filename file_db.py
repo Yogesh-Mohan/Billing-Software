@@ -60,12 +60,24 @@ class FileCollection:
         # Convert date strings back to datetime objects
         for doc in data:
             for key, val in doc.items():
-                if isinstance(val, str) and val.startswith("__datetime__:"):
-                    doc[key] = datetime.fromisoformat(val.replace("__datetime__:", ""))
+                if isinstance(val, str):
+                    if val.startswith("__datetime__:"):
+                        doc[key] = datetime.fromisoformat(val.replace("__datetime__:", ""))
+                    elif key.endswith("_date") or key.endswith("_at"):
+                        try:
+                            doc[key] = datetime.fromisoformat(val.replace("Z", "+00:00")[:19])
+                        except ValueError:
+                            pass
                 elif isinstance(val, dict):
                     for k2, v2 in val.items():
-                        if isinstance(v2, str) and v2.startswith("__datetime__:"):
-                            val[k2] = datetime.fromisoformat(v2.replace("__datetime__:", ""))
+                        if isinstance(v2, str):
+                            if v2.startswith("__datetime__:"):
+                                val[k2] = datetime.fromisoformat(v2.replace("__datetime__:", ""))
+                            elif k2.endswith("_date") or k2.endswith("_at"):
+                                try:
+                                    val[k2] = datetime.fromisoformat(v2.replace("Z", "+00:00")[:19])
+                                except ValueError:
+                                    pass
         return data
 
     def _write(self, data):
