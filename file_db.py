@@ -255,7 +255,18 @@ class FileCollection:
 
                 for doc in docs:
                     # For _id: None, group everything together
-                    key = None if group_id is None else str(doc.get(group_id.replace("$", ""), ""))
+                    if group_id is None:
+                        key = None
+                    elif isinstance(group_id, dict) and "$dateToString" in group_id:
+                        date_field = group_id["$dateToString"]["date"].replace("$", "")
+                        dt_val = doc.get(date_field)
+                        if isinstance(dt_val, datetime):
+                            fmt = group_id["$dateToString"].get("format", "%Y-%m-%d")
+                            key = dt_val.strftime(fmt)
+                        else:
+                            key = str(dt_val)
+                    else:
+                        key = str(doc.get(str(group_id).replace("$", ""), ""))
                     if key not in result:
                         result[key] = {"_id": key}
                     for field, expr in group.items():
