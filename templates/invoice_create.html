@@ -1,0 +1,796 @@
+{% extends "base.html" %}
+{% block title %}Create Invoice{% endblock %}
+
+{% block head %}
+<style>
+    /* Specific styling for the Brisk-style invoice page */
+    .invoice-builder-container {
+        background-color: #f8f9fa;
+        color: #333333;
+        border-radius: 12px;
+        padding: 30px;
+        border: 1px solid #e0e0e0;
+        margin-top: 10px;
+    }
+    
+    .invoice-builder-container .form-label {
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.88rem;
+    }
+    
+    .invoice-builder-container .form-control-custom {
+        background-color: #ffffff !important;
+        border: 1px solid #ced4da !important;
+        color: #333333 !important;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    
+    .invoice-builder-container .form-control-custom:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+    }
+
+    .explore-alert {
+        background-color: #ebf5ff;
+        border: 1px solid #bce0ff;
+        color: #1e4e79;
+        border-radius: 6px;
+        padding: 15px;
+        font-size: 0.9rem;
+    }
+
+    .logo-placeholder-box {
+        border: 2px dashed #cccccc;
+        border-radius: 6px;
+        height: 110px;
+        width: 110px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #888888;
+        font-size: 0.85rem;
+        cursor: pointer;
+        background-color: #ffffff;
+        transition: all 0.2s ease;
+    }
+    .logo-placeholder-box:hover {
+        border-color: #0d6efd;
+        color: #0d6efd;
+    }
+
+    .table-invoice-items {
+        border-collapse: collapse;
+        width: 100%;
+        background-color: #ffffff;
+    }
+    
+    .table-invoice-items th {
+        background-color: #d1d5db !important;
+        color: #374151 !important;
+        font-weight: 700;
+        font-size: 0.88rem;
+        padding: 10px;
+        border: 1px solid #bdc3c7;
+    }
+    
+    .table-invoice-items td {
+        padding: 8px;
+        border: 1px solid #dee2e6;
+        background-color: #ffffff;
+    }
+
+    .btn-add-item {
+        background-color: var(--accent-blue);
+        color: white;
+        border: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        border-radius: 4px;
+    }
+    .btn-add-item:hover {
+        background-color: var(--accent-blue-hover);
+        color: white;
+    }
+
+    .btn-discount-shipping {
+        background-color: var(--accent-blue);
+        color: white;
+        border: none;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        border-radius: 4px;
+    }
+    .btn-discount-shipping:hover {
+        background-color: var(--accent-blue-hover);
+        color: white;
+    }
+
+    .note-tabs .nav-link {
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 1px solid transparent;
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+        background-color: #e9ecef;
+        margin-right: 4px;
+        padding: 6px 12px;
+    }
+
+    .note-tabs .nav-link.active {
+        background-color: #ffffff !important;
+        border-color: #ced4da #ced4da #ffffff !important;
+        color: var(--accent-blue) !important;
+    }
+
+    .notes-textarea {
+        border: 1px solid #ced4da;
+        border-radius: 0 4px 4px 4px;
+        padding: 12px;
+        font-size: 0.9rem;
+        width: 100%;
+        min-height: 120px;
+        background-color: #ffffff;
+    }
+
+    .totals-box {
+        font-size: 1rem;
+        text-align: right;
+    }
+    
+    .totals-row {
+        padding: 8px 0;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    .totals-label {
+        font-weight: 600;
+        color: #495057;
+        width: 150px;
+        text-align: left;
+    }
+
+    .totals-val {
+        font-weight: 700;
+        color: #212529;
+        width: 120px;
+        text-align: right;
+    }
+
+    .bottom-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .btn-save-download {
+        background-color: var(--accent-red);
+        color: white;
+        font-weight: 700;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 4px;
+    }
+    .btn-save-download:hover {
+        background-color: var(--accent-red-hover);
+    }
+
+    .btn-black-action {
+        background-color: var(--accent-blue);
+        color: #ffffff;
+        border: 1px solid var(--accent-blue);
+        font-weight: 600;
+        padding: 10px 24px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-black-action:hover {
+        background-color: var(--accent-blue-hover);
+        color: #ffffff;
+        border-color: var(--accent-blue-hover);
+    }
+
+    /* ===== Invoice Preview Modal ===== */
+    .preview-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.82);
+        z-index: 9999;
+        overflow-y: auto;
+        padding: 30px 0;
+        animation: fadeInOverlay 0.25s ease;
+    }
+    .preview-overlay.active { display: flex; justify-content: center; align-items: flex-start; }
+    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+
+    .preview-close-btn {
+        position: fixed;
+        top: 18px; right: 28px;
+        z-index: 10001;
+        background: #ff4444;
+        color: #fff;
+        border: none;
+        width: 42px; height: 42px;
+        border-radius: 50%;
+        font-size: 1.3rem;
+        cursor: pointer;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        transition: transform 0.2s;
+    }
+    .preview-close-btn:hover { transform: scale(1.1); background: #cc0000; }
+
+    .preview-paper {
+        background: #ffffff;
+        width: 210mm;
+        min-height: 297mm;
+        max-width: 95vw;
+        padding: 40px 45px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        border-radius: 2px;
+        position: relative;
+        border: 1px solid #7f7f7f;
+        font-family: Helvetica, Arial, sans-serif;
+        color: #000;
+        font-size: 12px;
+    }
+
+    .preview-paper .inv-badge {
+        background: #ff1f1f;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 5px 18px;
+        display: inline-block;
+        text-align: right;
+    }
+
+    .preview-paper .inv-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .preview-paper .inv-header-left img {
+        max-height: 65px;
+        max-width: 120px;
+        object-fit: contain;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .preview-paper .inv-header-left .biz-name {
+        font-weight: 700;
+        font-size: 13px;
+        color: #000;
+    }
+    .preview-paper .inv-header-left .biz-addr {
+        font-size: 9px;
+        color: #333;
+        line-height: 1.5;
+        max-width: 320px;
+    }
+
+    .preview-paper .inv-header-right {
+        text-align: right;
+    }
+    .preview-paper .inv-header-right .inv-meta {
+        font-size: 10px;
+        color: #000;
+        margin-top: 8px;
+        line-height: 1.8;
+    }
+    .preview-paper .inv-header-right .inv-meta b {
+        display: inline-block;
+        min-width: 80px;
+        text-align: left;
+    }
+
+    .preview-paper .inv-bill-to {
+        margin-bottom: 18px;
+    }
+    .preview-paper .inv-bill-to h6 {
+        font-size: 10px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .preview-paper .inv-bill-to p {
+        font-size: 9px;
+        color: #333;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .preview-paper .inv-items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+    }
+    .preview-paper .inv-items-table th {
+        background: #888;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 9px 10px;
+        border: 0.5px solid #666;
+    }
+    .preview-paper .inv-items-table td {
+        font-size: 9px;
+        padding: 7px 10px;
+        border: 0.5px solid #666;
+        color: #000;
+    }
+    .preview-paper .inv-items-table tr:nth-child(even) td {
+        background: #fafafa;
+    }
+    .preview-paper .inv-items-table .empty-row td {
+        height: 22px;
+    }
+
+    .preview-paper .inv-totals {
+        text-align: right;
+        margin-top: 14px;
+    }
+    .preview-paper .inv-totals table {
+        margin-left: auto;
+        border-collapse: collapse;
+    }
+    .preview-paper .inv-totals td {
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .preview-paper .inv-totals .label-cell { text-align: right; }
+    .preview-paper .inv-totals .value-cell { text-align: right; min-width: 100px; }
+
+    .preview-paper .inv-footer {
+        margin-top: 30px;
+        font-size: 10px;
+        color: #111;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="top-navbar no-print">
+    <div>
+        <h2 class="page-title">Brisk Invoice Creator</h2>
+        <p class="text-muted m-0">Dynamic billing builder modeled after Brisk Invoicing.</p>
+    </div>
+</div>
+
+<div class="invoice-builder-container shadow-sm mb-5">
+    <!-- Top explore alert -->
+    <div class="explore-alert mb-4 d-flex justify-content-between align-items-start no-print">
+        <div>
+            <strong>Get Started or Explore</strong>
+            <div class="small mt-1">The best way to try out Brisk Invoicing is to quickly create your first Invoice. If you want to explore the app a bit first, open the dashboard to access getting started links, select your template, enter your business settings. Use the left navigation bar to browse the program.</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <form action="{{ url_for('create_invoice') }}" method="POST" id="invoice-form">
+        <!-- Header Info Rows -->
+        <div class="row mb-4">
+            <!-- Left Info Panel (Logo, Business details) -->
+            <div class="col-md-6">
+                <div class="d-flex gap-3">
+                    <!-- Fix #7: Use dynamic logo from business_settings -->
+                    <div class="logo-placeholder-box">
+                        {% if business_settings.logo_path %}
+                            <img src="{{ business_settings.logo_path }}" alt="Studio Logo" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                        {% else %}
+                            <span class="text-muted small text-center"><i class="fas fa-image fa-2x d-block mb-1"></i>Logo</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <!-- Fix #8: Use dynamic business name and address from settings -->
+                        <div class="mb-2">
+                            <input type="text" class="form-control form-control-custom font-weight-bold" style="font-size: 1.1rem;" placeholder="Business Name" value="{{ business_settings.business_name }}" readonly>
+                        </div>
+                        <div>
+                            <textarea class="form-control form-control-custom text-muted small" rows="3" placeholder="Business Address" readonly>{{ business_settings.address }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Info Panel (Invoice Details) -->
+            <div class="col-md-6">
+                <div class="row mb-2 align-items-center">
+                    <label class="col-sm-4 text-sm-end form-label m-0">Date:</label>
+                    <div class="col-sm-8">
+                        <input type="date" name="invoice_date" class="form-control form-control-custom" value="{{ today }}" required>
+                    </div>
+                </div>
+                <div class="row mb-2 align-items-center">
+                    <label class="col-sm-4 text-sm-end form-label m-0">Invoice Number:</label>
+                    <div class="col-sm-8">
+                        <input type="text" name="invoice_number" class="form-control form-control-custom font-monospace" value="{{ suggested_invoice_num }}" placeholder="e.g. 10000" required>
+                    </div>
+                </div>
+                <div class="row mb-2 align-items-center">
+                    <label class="col-sm-4 text-sm-end form-label m-0">Payment Method   :</label>
+                    <div class="col-sm-5">
+                        <select name="payment_terms" class="form-select form-control-custom">
+                            <option value="Cash" selected>Cash</option>
+                            <option value="UPI">UPI</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <input type="number" name="payment_days" class="form-control form-control-custom" value="30">
+                    </div>
+                </div>
+                <div class="row mb-2 align-items-center">
+                    <label class="col-sm-4 text-sm-end form-label m-0">Purchase Order #:</label>
+                    <div class="col-sm-8">
+                        <input type="text" name="po_number" class="form-control form-control-custom" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="row mb-2 align-items-center">
+                    <label class="col-sm-4 text-sm-end form-label m-0">Salesperson:</label>
+                    <div class="col-sm-8">
+                        <input type="text" name="salesperson" class="form-control form-control-custom" placeholder="Optional">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4" style="border-color: #dee2e6;">
+
+        <!-- Customer & Address Section -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="row align-items-center mb-2">
+                    <label for="customer_name" class="col-sm-3 form-label m-0">Customer:</label>
+                    <div class="col-sm-9">
+                        <!-- Fix #4 & #19: Replace plain text input with datalist for existing customer autofill -->
+                        <input type="text" name="customer_name" id="customer_name" 
+                               class="form-control form-control-custom" 
+                               placeholder="-- Type or select customer --" 
+                               list="customer_datalist" 
+                               autocomplete="off" required>
+                        <datalist id="customer_datalist">
+                            {% for cust in customers %}
+                                <option value="{{ cust.name }}" 
+                                        data-address="{{ cust.address|replace('\n',' ') }}"
+                                        data-phone="{{ cust.phone }}"
+                                        data-email="{{ cust.email }}">
+                                {% endfor %}
+                        </datalist>
+                    </div>
+                </div>
+                <div class="row">
+                    <label class="col-sm-3 form-label">Billing Address:</label>
+                    <div class="col-sm-9">
+                        <!-- Fix #19: billing_address is auto-filled when customer is selected -->
+                        <textarea name="billing_address" id="billing_address" class="form-control form-control-custom" rows="3" placeholder="Select a customer to auto-fill, or type manually"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <div class="row">
+                    <label for="shipping_address" class="col-sm-3 form-label text-sm-end">Shipping Address:</label>
+                    <div class="col-sm-9">
+                        <textarea name="shipping_address" id="shipping_address" class="form-control form-control-custom" rows="4" placeholder="Leave blank if same as Billing Address"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="table-responsive mb-3">
+            <table class="table-invoice-items">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">Qty</th>
+                        <th style="width: 20%;">Item Code</th>
+                        <th style="width: 40%;">Description</th>
+                        <th style="width: 14%;">Unit Price</th>
+                        <th style="width: 10%;">Tax (%)</th>
+                        <th style="width: 14%;">Total</th>
+                        <th style="width: 4%;"></th>
+                    </tr>
+                </thead>
+                <tbody id="invoice-items-body">
+                    <!-- Javascript Row Seeding -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Table Controls Buttons -->
+        <div class="mb-4 d-flex gap-2">
+            <button type="button" class="btn-add-item" id="add-item-row">
+                <i class="fas fa-plus me-1"></i> Add Item
+            </button>
+            <!-- Fix #17: Remove fake alert() buttons. Replaced with informational tooltip -->
+            <span class="text-muted small align-self-center ms-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Discounts &amp; shipping can be added as separate line items.
+            </span>
+        </div>
+
+        <!-- Notes and Totals Section -->
+        <div class="row mt-5">
+            <!-- Notes Tabs -->
+            <div class="col-md-7 mb-4">
+                <ul class="nav note-tabs mb-0" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="public-tab" data-bs-toggle="tab" data-bs-target="#public-pane" type="button" role="tab">Public Note</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="private-tab" data-bs-toggle="tab" data-bs-target="#private-pane" type="button" role="tab">Private Note</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="foot-tab" data-bs-toggle="tab" data-bs-target="#foot-pane" type="button" role="tab">Foot Note</button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="public-pane" role="tabpanel">
+                        <textarea name="public_note" class="notes-textarea" placeholder="Add a public note to the invoice (visible to client)..."></textarea>
+                    </div>
+                    <div class="tab-pane fade" id="private-pane" role="tabpanel">
+                        <textarea name="private_note" class="notes-textarea" placeholder="Add an internal note (for business eyes only)..."></textarea>
+                    </div>
+                    <div class="tab-pane fade" id="foot-pane" role="tabpanel">
+                        <textarea name="foot_note" class="notes-textarea" placeholder="Add payment terms details or thank you footnotes..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Totals Calculations -->
+            <div class="col-md-5">
+                <div class="totals-box">
+                    <div class="totals-row">
+                        <div class="totals-label">Subtotal:</div>
+                        <div class="totals-val">₹<span id="display_subtotal">0.00</span></div>
+                    </div>
+                    <div class="totals-row">
+                        <div class="totals-label">GST / Tax rate:</div>
+                        <div class="totals-val d-flex justify-content-end align-items-center">
+                            <input type="number" name="tax_rate" id="tax_rate" class="form-control form-control-custom text-end py-1 px-2" style="width: 70px;" value="18" min="0" max="100">
+                            <span class="ms-1">%</span>
+                        </div>
+                    </div>
+                    <div class="totals-row">
+                        <div class="totals-label">Tax Amount:</div>
+                        <div class="totals-val">₹<span id="display_tax_amount">0.00</span></div>
+                    </div>
+                    <div class="totals-row border-0">
+                        <div class="col-8 text-end fs-5 font-weight-bold">Grand Total:</div>
+                        <div class="col-4 px-3">
+                            <div class="totals-val fs-5 text-primary">₹<span id="display_grand_total">0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer actions bar -->
+        <div class="bottom-actions-row">
+            <div>
+                <button type="button" onclick="location.reload();" class="btn btn-black-action">Clear Invoice</button>
+                <button type="button" onclick="openInvoicePreview();" class="btn btn-black-action ms-2"><i class="fas fa-eye me-1"></i> Preview Invoice</button>
+            </div>
+            <div>
+                <button type="submit" class="btn-save-download">
+                    Save and Download <i class="fas fa-caret-down ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Invoice Preview Modal Overlay -->
+<div class="preview-overlay" id="invoicePreviewOverlay">
+    <button class="preview-close-btn" onclick="closeInvoicePreview()" title="Close Preview">&times;</button>
+    <div class="preview-paper" id="previewPaper">
+        <!-- Dynamically filled by JS -->
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<!-- Embed JSON data safely to prevent IDE JS parsing errors -->
+<script id="items-data" type="application/json">{{ items_json|safe }}</script>
+<script id="customers-data" type="application/json">{{ customers_json|safe }}</script>
+<script id="business-settings-data" type="application/json">{
+    "name": {{ business_settings.business_name | tojson }},
+    "address": {{ business_settings.address | tojson }},
+    "phone": {{ business_settings.phone | default('') | tojson }},
+    "email": {{ business_settings.email | default('') | tojson }},
+    "gst": {{ business_settings.gst_number | default('') | tojson }},
+    "logo": {{ business_settings.logo_path | default('') | tojson }}
+}</script>
+<script>
+    // Build items data from embedded JSON blob
+    const itemsData = JSON.parse(document.getElementById('items-data').textContent);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fix #4: Customer name input — autofill billing address from datalist selection
+        const customerNameInput = document.getElementById('customer_name');
+        const billingAddress = document.getElementById('billing_address');
+        
+        // Store all customer data from server as a single JSON object
+        const customerDataMap = JSON.parse(document.getElementById('customers-data').textContent);
+        
+        // Fix #19: Fill billing address when a known customer name is typed/selected
+        if (customerNameInput && billingAddress) {
+            customerNameInput.addEventListener('input', function() {
+                const name = customerNameInput.value.trim();
+                const cdata = customerDataMap[name];
+                if (cdata) {
+                    let addr = cdata.address || '';
+                    if (cdata.phone) addr += (addr ? '\n' : '') + 'Phone: ' + cdata.phone;
+                    if (cdata.email) addr += (addr ? '\n' : '') + 'Email: ' + cdata.email;
+                    billingAddress.value = addr;
+                }
+            });
+        }
+    });
+</script>
+<script src="{{ url_for('static', filename='js/invoice.js') }}"></script>
+
+<script>
+// ===== Invoice Preview Modal Logic =====
+const _biz = JSON.parse(document.getElementById('business-settings-data').textContent);
+const BUSINESS_NAME = _biz.name;
+const BUSINESS_ADDRESS = _biz.address;
+const BUSINESS_PHONE = _biz.phone;
+const BUSINESS_EMAIL = _biz.email;
+const BUSINESS_GST = _biz.gst;
+const LOGO_PATH = _biz.logo;
+
+function formatCurrency(val) {
+    return '₹' + Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getFormDate() {
+    const d = document.querySelector('input[name="invoice_date"]').value;
+    if (!d) return '';
+    const dt = new Date(d);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return dt.getDate().toString().padStart(2,'0') + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+}
+
+function getDueDate() {
+    const d = document.querySelector('input[name="invoice_date"]').value;
+    const days = parseInt(document.querySelector('input[name="payment_days"]').value) || 30;
+    if (!d) return '';
+    const dt = new Date(d);
+    dt.setDate(dt.getDate() + days);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return dt.getDate().toString().padStart(2,'0') + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+}
+
+function openInvoicePreview() {
+    const paper = document.getElementById('previewPaper');
+    
+    // Gather form data
+    const invNumber = document.querySelector('input[name="invoice_number"]').value || '—';
+    const customerName = document.getElementById('customer_name').value || 'Customer Name';
+    const billingAddr = document.getElementById('billing_address').value || '';
+    const invDate = getFormDate();
+    const dueDate = getDueDate();
+    
+    // Gather items from the table
+    const rows = document.querySelectorAll('#invoice-items-body tr');
+    let itemsHTML = '';
+    let rowCount = 0;
+    rows.forEach(function(row) {
+        const qtyInput = row.querySelector('input[name="item_quantity[]"]');
+        const descInput = row.querySelector('input[name="item_description[]"]');
+        const priceInput = row.querySelector('input[name="item_price[]"]');
+        const codeInput = row.querySelector('input[name="item_code[]"]');
+        if (!qtyInput || !priceInput) return;
+        const qty = parseInt(qtyInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const desc = (descInput ? descInput.value : '') || '';
+        const code = (codeInput ? codeInput.value : '') || '';
+        if (qty <= 0 && price <= 0) return;
+        const total = qty * price;
+        const label = desc ? desc + (code ? ' [ ' + code + ' ]' : '') : (code || 'Item');
+        itemsHTML += '<tr>'
+            + '<td style="text-align:center;">' + qty + '</td>'
+            + '<td>' + label + '</td>'
+            + '<td style="text-align:right;">' + formatCurrency(price) + '</td>'
+            + '<td style="text-align:right;">' + formatCurrency(total) + '</td>'
+            + '</tr>';
+        rowCount++;
+    });
+    
+    // Add empty rows to fill space (like the PDF)
+    const minRows = 10;
+    for (let i = rowCount; i < minRows; i++) {
+        itemsHTML += '<tr class="empty-row"><td></td><td></td><td></td><td></td></tr>';
+    }
+    
+    // Get totals from the display
+    const subtotalEl = document.getElementById('display_subtotal');
+    const taxAmtEl = document.getElementById('display_tax_amount');
+    const grandTotalEl = document.getElementById('display_grand_total');
+    const subtotal = subtotalEl ? subtotalEl.textContent : '0.00';
+    const taxAmt = taxAmtEl ? taxAmtEl.textContent : '0.00';
+    const grandTotal = grandTotalEl ? grandTotalEl.textContent : '0.00';
+    
+    // Build the preview HTML
+    let logoHTML = '';
+    if (LOGO_PATH) {
+        logoHTML = '<img src="' + LOGO_PATH + '" alt="Logo">';
+    }
+    
+    paper.innerHTML = ''
+        // Header
+        + '<div class="inv-header">'
+        + '  <div class="inv-header-left">'
+        +      logoHTML
+        + '    <div class="biz-name">' + BUSINESS_NAME + '</div>'
+        + '    <div class="biz-addr">' + BUSINESS_ADDRESS.replace(/\n/g, '<br>') + '</div>'
+        + '  </div>'
+        + '  <div class="inv-header-right">'
+        + '    <div class="inv-badge">Invoice</div>'
+        + '    <div class="inv-meta">'
+        + '      <b>Date:</b> ' + invDate + '<br>'
+        + '      <b>Invoice No.:</b> ' + invNumber + '<br>'
+        + '      <b>Due Date:</b> ' + dueDate
+        + '    </div>'
+        + '  </div>'
+        + '</div>'
+        // Bill To
+        + '<div class="inv-bill-to">'
+        + '  <h6>Bill To</h6>'
+        + '  <p><strong>' + customerName + '</strong><br>' + billingAddr.replace(/\n/g, '<br>') + '</p>'
+        + '</div>'
+        // Items Table
+        + '<table class="inv-items-table">'
+        + '  <thead><tr>'
+        + '    <th style="width:8%;text-align:center;">Qty</th>'
+        + '    <th style="width:52%;">Description</th>'
+        + '    <th style="width:20%;text-align:right;">Unit Price</th>'
+        + '    <th style="width:20%;text-align:right;">Total</th>'
+        + '  </tr></thead>'
+        + '  <tbody>' + itemsHTML + '</tbody>'
+        + '</table>'
+        // Totals
+        + '<div class="inv-totals">'
+        + '  <table>'
+        + '    <tr><td class="label-cell">Total</td><td class="value-cell">₹' + grandTotal + '</td></tr>'
+        + '    <tr><td class="label-cell">Balance</td><td class="value-cell">₹' + grandTotal + '</td></tr>'
+        + '  </table>'
+        + '</div>'
+        // Footer
+        + '<div class="inv-footer">Thank you for your business.</div>';
+    
+    // Show overlay
+    document.getElementById('invoicePreviewOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeInvoicePreview() {
+    document.getElementById('invoicePreviewOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeInvoicePreview();
+});
+
+// Close on clicking outside the paper
+document.getElementById('invoicePreviewOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeInvoicePreview();
+});
+</script>
+{% endblock %}

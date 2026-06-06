@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Invoice History{% endblock %}
+
+{% block content %}
+<div class="top-navbar">
+    <div>
+        <h2 class="page-title">Invoice History & Archives</h2>
+        <p class="text-muted m-0">Browse through, filter, search, and reprint previously generated invoices.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('create_invoice') }}" class="btn btn-red">
+            <i class="fas fa-plus me-2"></i> Create Invoice
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filter Panel -->
+<div class="custom-card mb-4">
+    <form method="GET" action="{{ url_for('invoices') }}">
+        <div class="row g-3">
+            <!-- Search Text -->
+            <div class="col-md-4">
+                <label for="search" class="form-label text-muted small">Search Invoices</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent" style="border-color: var(--border-color); color: var(--text-muted);">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" name="search" id="search" class="form-control form-control-custom" placeholder="Inv number, client name..." value="{{ search_query }}">
+                </div>
+            </div>
+            
+            <!-- Date range start -->
+            <div class="col-md-3">
+                <label for="start_date" class="form-label text-muted small">Start Date</label>
+                <input type="date" name="start_date" id="start_date" class="form-control form-control-custom" value="{{ start_date }}">
+            </div>
+            
+            <!-- Date range end -->
+            <div class="col-md-3">
+                <label for="end_date" class="form-label text-muted small">End Date</label>
+                <input type="date" name="end_date" id="end_date" class="form-control form-control-custom" value="{{ end_date }}">
+            </div>
+            
+            <!-- Action buttons -->
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-red w-100 py-2">Filter</button>
+                {% if search_query or start_date or end_date %}
+                    <a href="{{ url_for('invoices') }}" class="btn btn-secondary-custom w-100 py-2 text-center">Reset</a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Invoices List Table -->
+<div class="custom-card">
+    <div class="custom-table-container">
+        {% if invoices %}
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Invoice No</th>
+                        <th>Billed To</th>
+                        <th>Invoice Date</th>
+                        <th class="text-end">Subtotal</th>
+                        <th class="text-end">Tax</th>
+                        <th class="text-end">Grand Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in invoices %}
+                        <tr>
+                            <td class="font-weight-bold text-dark font-monospace">{{ inv.invoice_number }}</td>
+                            <td>
+                                <div class="font-weight-bold text-dark">{{ inv.customer.name }}</div>
+                                <small class="text-muted"><i class="fas fa-phone fa-sm me-1"></i> {{ inv.customer.phone }}</small>
+                            </td>
+                            <td>{{ inv.invoice_date.strftime('%d-%b-%Y') }}</td>
+                            <td class="text-end">₹{{ "{:,.2f}".format(inv.subtotal) }}</td>
+                            <td><span class="badge bg-secondary font-monospace">{{ inv['items']|length }}</span> items</td>
+                            <td class="text-end text-dark font-weight-bold">₹{{ "{:,.2f}".format(inv.grand_total) }}</td>
+                            <td class="text-end">
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('invoice_view', invoice_id=inv._id) }}" class="btn btn-sm btn-secondary-custom">
+                                        <i class="fas fa-eye me-1"></i> Open
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-receipt fa-2x mb-3"></i>
+                <p>No invoices match your filters.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

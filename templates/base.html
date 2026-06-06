@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - RED STUDIO</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Responsive Toggle Button (Mobile Only) -->
+    <div class="no-print d-lg-none p-3 bg-white border-bottom border-secondary d-flex justify-content-between align-items-center">
+        <h4 class="m-0 text-dark font-weight-bold">RED <span>STUDIO</span></h4>
+        <button class="btn btn-outline-secondary btn-sm" id="sidebarToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar no-print">
+        <div class="sidebar-brand">
+            <!-- Fix #15: Use dynamic business name from settings -->
+            {{ business_settings.business_name | upper | replace(' ', '&nbsp;') | safe }}
+        </div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-item">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('customers') }}" class="sidebar-link {% if request.endpoint == 'customers' %}active{% endif %}">
+                    <i class="fas fa-users"></i> Customers
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('items') }}" class="sidebar-link {% if request.endpoint == 'items' %}active{% endif %}">
+                    <i class="fas fa-list"></i> Items
+                </a>
+            </li>
+            <hr class="my-2 border-secondary opacity-25">
+            
+            <li class="sidebar-item">
+                <a href="{{ url_for('create_invoice') }}" class="sidebar-link {% if request.endpoint == 'create_invoice' %}active{% endif %}">
+                    <i class="fas fa-file-invoice-dollar"></i> Create Invoice
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('invoices') }}" class="sidebar-link {% if request.endpoint == 'invoices' or request.endpoint == 'invoice_view' %}active{% endif %}">
+                    <i class="fas fa-history"></i> Invoice History
+                </a>
+
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('reports') }}" class="sidebar-link {% if request.endpoint == 'reports' %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i> Sales Reports
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('settings') }}" class="sidebar-link {% if request.endpoint == 'settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </li>
+            <li class="sidebar-item mt-4">
+                <a href="{{ url_for('logout') }}" class="sidebar-link text-danger">
+                    <i class="fas fa-sign-out-alt text-danger"></i> Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content Panel -->
+    <div class="main-content">
+        <!-- Messages & Alerts -->
+        <div class="container-fluid no-print">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Dynamic Content block -->
+        <div class="container-fluid">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 Bundle JS (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom main.js helper -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

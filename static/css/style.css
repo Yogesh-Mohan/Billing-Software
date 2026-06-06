@@ -1,0 +1,477 @@
+/* RED STUDIO Custom CSS — Logo-matched Color Scheme */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    /* Brisk Invoicing Palette (AdminLTE Theme) */
+    --bg-primary: #ecf0f5;
+    --bg-secondary: #ffffff;
+    --bg-card: #ffffff;
+    --border-color: #d2d6de;
+    --text-main: #333333;
+    --text-muted: #777777;
+    
+    /* Brisk Invoicing Colors */
+    --accent-red: #00a65a; /* Primary Green */
+    --accent-red-hover: #008d4c;
+    --accent-red-light: #e8f7e8;
+    --accent-red-gradient: #00a65a; 
+    --accent-red-glow: transparent;
+    --accent-blue: #3c8dbc; /* Active Blue */
+    --accent-blue-hover: #367fa9;
+    --accent-blue-light: #e6f2f8;
+
+    --sidebar-bg: #222d32;
+    --sidebar-text: #b8c7ce;
+    --sidebar-active-bg: #1e282c;
+    --sidebar-active-text: #ffffff;
+    
+    --sidebar-width: 230px;
+    --border-radius: 3px;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-size: 14px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-red);
+}
+
+/* ========================================
+   SIDEBAR
+   ======================================== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    width: var(--sidebar-width);
+    padding: 0;
+    background-color: var(--sidebar-bg);
+    border-right: none;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-brand {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #1a2226;
+    background-color: #367fa9; /* AdminLTE top logo blue */
+    gap: 14px;
+}
+
+.sidebar-brand-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.sidebar-brand-text {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+.sidebar-brand-text .red {
+    color: #ffffff;
+}
+
+.sidebar-menu {
+    padding: 20px 10px;
+    list-style: none;
+    margin: 0;
+    flex: 1;
+}
+
+.sidebar-item {
+    margin-bottom: 6px;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    border-radius: 0;
+    font-weight: 500;
+    font-size: 0.92rem;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.sidebar-link i {
+    width: 22px;
+    font-size: 1rem;
+    margin-right: 10px;
+    transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+    color: var(--sidebar-active-text);
+    background-color: var(--sidebar-active-bg);
+}
+
+.sidebar-link.active {
+    color: var(--sidebar-active-text);
+    background-color: var(--sidebar-active-bg);
+    border-left: 3px solid var(--accent-red);
+}
+
+.sidebar-link.active i {
+    color: var(--accent-red);
+}
+
+/* ========================================
+   MAIN CONTENT AREA
+   ======================================== */
+.main-content {
+    margin-left: var(--sidebar-width);
+    padding: 36px 40px;
+    transition: all 0.3s ease;
+}
+
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.page-title {
+    font-size: 1.65rem;
+    font-weight: 500;
+    color: var(--accent-blue);
+    margin: 0;
+}
+
+/* ========================================
+   METRIC CARDS
+   ======================================== */
+.metric-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-blue);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.metric-info h6 {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.metric-info h3 {
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: var(--accent-blue-light);
+    color: var(--accent-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+/* ========================================
+   CUSTOM CARDS
+   ======================================== */
+.custom-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.custom-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.custom-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+.custom-table-container {
+    overflow-x: auto;
+}
+
+.custom-table {
+    width: 100%;
+    color: var(--text-main);
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.custom-table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--border-color);
+    background-color: #fafbfc;
+}
+
+.custom-table td {
+    padding: 14px 16px;
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+
+.custom-table tr:hover td {
+    background-color: #f8f9fa;
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+.badge-low-stock {
+    background-color: rgba(204, 42, 42, 0.12);
+    color: #e04040;
+    border: 1px solid rgba(204, 42, 42, 0.25);
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+.btn-red {
+    background-color: var(--accent-red);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+}
+
+.btn-red:hover {
+    background-color: var(--accent-red-hover);
+    color: #fff;
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+.btn-black-action {
+    background-color: var(--accent-blue);
+    color: #ffffff;
+    border: 1px solid var(--accent-blue);
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+}
+
+.btn-black-action:hover {
+    background-color: #0056b3;
+    color: #ffffff;
+    border-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.btn-secondary-custom {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-weight: 500;
+    padding: 8px 20px;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+}
+
+.btn-secondary-custom:hover {
+    background-color: #f8f9fa;
+    color: var(--text-main);
+    border-color: var(--text-muted);
+}
+
+/* ========================================
+   FORM INPUTS
+   ======================================== */
+.form-control-custom {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-main) !important;
+    padding: 10px 14px;
+    transition: all 0.2s ease;
+}
+
+.form-control-custom:focus {
+    background-color: #ffffff;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px var(--accent-blue-light);
+    outline: none;
+}
+
+.form-control-custom::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+select.form-control-custom option {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+
+/* ========================================
+   LOGIN PAGE
+   ======================================== */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+}
+
+.login-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 44px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.login-logo img {
+    max-height: 80px;
+    object-fit: contain;
+}
+
+.login-logo-text {
+    font-size: 1.6rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.login-logo-text .red {
+    color: var(--accent-red);
+}
+
+/* ========================================
+   INVOICE BUILDER (Create Invoice)
+   ======================================== */
+.invoice-item-row td {
+    padding: 8px;
+}
+
+.invoice-summary-table td {
+    border: none;
+    background: transparent;
+    padding: 6px 12px;
+}
+
+/* ========================================
+   RESPONSIVE (Mobile Sidebar Collapse)
+   ======================================== */
+@media (max-width: 991.98px) {
+    .sidebar {
+        left: -100%;
+    }
+    .sidebar.active {
+        left: 0;
+    }
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+}
+
+/* ========================================
+   PRINT / PDF OPTIMIZED STYLES
+   ======================================== */
+@media print {
+    body {
+        background-color: #fff !important;
+        color: #000 !important;
+        font-size: 12pt;
+    }
+    .sidebar, .top-navbar, .no-print, .btn, footer, hr.no-print {
+        display: none !important;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+    .printable-invoice-card {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        color: #000 !important;
+    }
+    .printable-invoice-card * {
+        color: #000 !important;
+        border-color: #dee2e6 !important;
+    }
+    .table th {
+        background-color: #f8f9fa !important;
+        color: #000 !important;
+    }
+}

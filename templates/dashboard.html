@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<!-- Chart.js for Sales Analytics Graph -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="top-navbar">
+    <div>
+        <h2 class="page-title">RED STUDIO Dashboard</h2>
+        <p class="text-muted m-0">Welcome back, Admin! Here is a summary of your studio's billing.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('create_invoice') }}" class="btn btn-red">
+            <i class="fas fa-plus me-2"></i> Create Invoice
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <!-- Total Sales -->
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-info">
+                <h6>Total Sales</h6>
+                <h3>₹{{ "{:,.2f}".format(total_sales) }}</h3>
+            </div>
+            <div class="metric-icon">
+                <i class="fas fa-indian-rupee-sign"></i>
+            </div>
+        </div>
+    </div>
+    <!-- Total Invoices -->
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-info">
+                <h6>Total Invoices</h6>
+                <h3>{{ total_invoices }}</h3>
+            </div>
+            <div class="metric-icon">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+        </div>
+    </div>
+    <!-- Total Customers -->
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-info">
+                <h6>Customers</h6>
+                <h3>{{ total_customers }}</h3>
+            </div>
+            <div class="metric-icon">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+    <!-- Total Products -->
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-info">
+                <h6>Products</h6>
+                <h3>{{ total_products }}</h3>
+            </div>
+            <div class="metric-icon">
+                <i class="fas fa-cubes"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Sales Summary Chart -->
+    <div class="col-lg-8">
+        <div class="custom-card h-100">
+            <div class="custom-card-header">
+                <h5 class="custom-card-title"><i class="fas fa-chart-area me-2 text-primary"></i> Sales Analytics</h5>
+                <span class="text-muted small">Last 6 Months</span>
+            </div>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Warnings -->
+    <div class="col-lg-4">
+        <div class="custom-card h-100">
+            <div class="custom-card-header">
+                <h5 class="custom-card-title"><i class="fas fa-exclamation-triangle me-2 text-warning"></i> Inventory Alerts</h5>
+                <span class="badge bg-danger">{{ low_stock_products|length }} Low Stock</span>
+            </div>
+            <div style="max-height: 300px; overflow-y: auto;">
+                {% if low_stock_products %}
+                    <ul class="list-group list-group-flush bg-transparent">
+                        {% for prod in low_stock_products %}
+                            <li class="list-group-item bg-transparent border-bottom border-secondary d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <h6 class="mb-1 text-dark font-weight-bold">{{ prod.product_name }}</h6>
+                                    <small class="text-muted">Code: {{ prod.product_code }}</small>
+                                </div>
+                                <span class="badge-low-stock">
+                                    {{ prod.stock_quantity }} left
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="m-0">All product stock levels are healthy!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Invoices Table -->
+<div class="custom-card">
+    <div class="custom-card-header">
+        <h5 class="custom-card-title"><i class="fas fa-file-lines me-2 text-primary"></i> Recent Invoices</h5>
+        <a href="{{ url_for('invoices') }}" class="text-primary text-decoration-none small font-weight-bold">View All <i class="fas fa-arrow-right ms-1"></i></a>
+    </div>
+    <div class="custom-table-container">
+        {% if recent_invoices %}
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Invoice No</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in recent_invoices %}
+                        <tr>
+                            <td class="font-weight-bold text-dark">{{ inv.invoice_number }}</td>
+                            <td>
+                                <div class="font-weight-bold text-dark">{{ inv.customer.name }}</div>
+                                <small class="text-muted">{{ inv.customer.phone }}</small>
+                            </td>
+                            <td>{{ inv.invoice_date.strftime('%d-%b-%Y') }}</td>
+                            <td class="text-dark font-weight-bold">₹{{ "{:,.2f}".format(inv.grand_total) }}</td>
+                            <td>
+                                <a href="{{ url_for('invoice_view', invoice_id=inv._id) }}" class="btn btn-sm btn-secondary-custom py-1 px-3">
+                                    <i class="fas fa-eye me-1"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-receipt fa-2x mb-3"></i>
+                <p>No invoices generated yet.</p>
+                <a href="{{ url_for('create_invoice') }}" class="btn btn-red btn-sm mt-2">Generate First Invoice</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script id="graph-data" type="application/json">
+    {
+        "months": [{% for item in graph_data %}"{{ item.month }}"{% if not loop.last %},{% endif %}{% endfor %}],
+        "sales": [{% for item in graph_data %}{{ item.total }}{% if not loop.last %},{% endif %}{% endfor %}]
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Load data from template via JSON
+        var graphData = JSON.parse(document.getElementById("graph-data").textContent);
+        const months = graphData.months;
+        const sales = graphData.sales;
+
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Monthly Sales Revenue (₹)',
+                    data: sales,
+                    borderColor: '#3c8dbc',
+                    backgroundColor: 'rgba(60, 141, 188, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#3c8dbc',
+                    pointBorderColor: '#ffffff',
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: '#d2d6de'
+                        },
+                        ticks: {
+                            color: '#777777'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: '#d2d6de'
+                        },
+                        ticks: {
+                            color: '#777777',
+                            callback: function(value) {
+                                return '₹' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+{% block title %}Items Management{% endblock %}
+
+{% block head %}
+<style>
+    /* New Item Modal - Classic Invoice Style matching reference */
+    .classic-modal .modal-content {
+        background-color: #f0f0f0;
+        border: 1px solid #999;
+        border-radius: 4px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        color: #333;
+    }
+    .classic-modal .modal-header {
+        background-color: #e8e8e8;
+        border-bottom: 1px solid #ccc;
+        padding: 12px 16px;
+        border-radius: 4px 4px 0 0;
+    }
+    .classic-modal .modal-header .modal-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #222;
+    }
+    .classic-modal .modal-header .help-link {
+        color: #336699;
+        text-decoration: underline;
+        font-size: 0.85rem;
+        cursor: pointer;
+    }
+    .classic-modal .modal-header .btn-close {
+        filter: none;
+        opacity: 0.7;
+    }
+    .classic-modal .modal-body {
+        padding: 20px 20px 10px 20px;
+        background-color: #f0f0f0;
+    }
+    .classic-modal .classic-label {
+        font-weight: 700;
+        color: #5a4a00;
+        font-size: 0.88rem;
+        margin-bottom: 4px;
+    }
+    .classic-modal .classic-input {
+        background-color: #fff !important;
+        border: 1px solid #bbb !important;
+        border-radius: 2px;
+        color: #333 !important;
+        padding: 7px 10px;
+        font-size: 0.9rem;
+        width: 100%;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .classic-modal .classic-input:focus {
+        border-color: #888 !important;
+        outline: none;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.12), 0 0 0 2px rgba(51,102,153,0.2) !important;
+    }
+    .classic-modal textarea.classic-input {
+        min-height: 70px;
+        resize: vertical;
+    }
+    .classic-modal select.classic-input {
+        appearance: auto;
+        -webkit-appearance: auto;
+        padding-right: 20px;
+    }
+    .classic-modal .classic-readonly {
+        background-color: #e0e0e0 !important;
+        border: 1px solid #bbb !important;
+        border-radius: 2px;
+        color: #666 !important;
+        padding: 7px 10px;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+    .classic-modal .stock-checkbox-label {
+        font-size: 0.88rem;
+        color: #333;
+        cursor: pointer;
+    }
+    .classic-modal .stock-checkbox-label input[type="checkbox"] {
+        margin-right: 6px;
+        cursor: pointer;
+    }
+    .classic-modal .modal-footer {
+        background-color: #e8e8e8;
+        border-top: 1px solid #ccc;
+        padding: 10px 16px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+    .classic-modal .btn-create-item {
+        background-color: #28a428;
+        color: #fff;
+        border: 1px solid #1e8c1e;
+        font-weight: 700;
+        font-size: 0.88rem;
+        padding: 7px 20px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .classic-modal .btn-create-item:hover {
+        background-color: #22901e;
+    }
+    .classic-modal .btn-cancel-classic {
+        background-color: #e0e0e0;
+        color: #333;
+        border: 1px solid #bbb;
+        font-weight: 600;
+        font-size: 0.88rem;
+        padding: 7px 20px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .classic-modal .btn-cancel-classic:hover {
+        background-color: #d0d0d0;
+    }
+    .classic-modal .mb-field {
+        margin-bottom: 14px;
+    }
+    .stock-fields {
+        display: none;
+    }
+    .stock-fields.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="top-navbar">
+    <div>
+        <h2 class="page-title">Items Management</h2>
+        <p class="text-muted m-0">Create and manage reusable invoice items with unique codes.</p>
+    </div>
+    <div>
+        <button type="button" class="btn btn-red" data-bs-toggle="modal" data-bs-target="#addItemModal">
+            <i class="fas fa-plus me-2"></i> Add New Item
+        </button>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="search" class="form-control" placeholder="Search by Item Name or Code..." value="{{ search_query }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+            </button>
+            {% if search_query %}
+            <a href="{{ url_for('items') }}" class="btn btn-secondary">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Items Table -->
+<div class="card custom-card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom pt-3 pb-2">
+        <h5 class="mb-0 font-weight-bold">All Items ({{ items|length }})</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if items %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr class="table-secondary">
+                        <th>Item Code</th>
+                        <th>Item Name</th>
+                        <th>Description</th>
+                        <th>Quantity (Unit)</th>
+                        <th class="text-end">Price (₹)</th>
+                        <th>Tax</th>
+                        <th>Supplier</th>
+                        <th class="text-end">Created</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-primary font-monospace">{{ item.item_code }}</span>
+                        </td>
+                        <td class="font-weight-bold">{{ item.item_name }}</td>
+                        <td class="text-muted small">{{ item.description if item.description else '-' }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td class="text-end font-weight-bold">₹{{ "{:,.2f}".format(item.price) }}</td>
+                        <td>{{ item.tax if item.tax else 'None' }}</td>
+                        <td>{{ item.supplier if item.supplier else '-' }}</td>
+                        <td class="text-muted text-end small">{{ item.created_at.strftime('%d-%b-%Y') if item.created_at else 'N/A' }}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editItemModal" 
+                                    data-id="{{ item._id }}"
+                                    data-code="{{ item.item_code }}"
+                                    data-name="{{ item.item_name }}"
+                                    data-desc="{{ item.description|default('', true)|e }}"
+                                    data-qty="{{ item.quantity }}"
+                                    data-price="{{ item.price }}"
+                                    data-tax="{{ item.tax|default('', true) }}"
+                                    data-supplier="{{ item.supplier|default('', true)|e }}"
+                                    data-note="{{ item.note|default('', true)|e }}"
+                                    data-curr="{{ item.current_qty|default(0, true) }}"
+                                    data-ideal="{{ item.ideal_qty|default(0, true) }}"
+                                    data-warn="{{ item.warning_qty|default(0, true) }}"
+                                    data-manage="{{ 'true' if item.manage_stock else 'false' }}"
+                                    onclick="editItem(this.dataset.id, this.dataset.code, this.dataset.name, this.dataset.desc, this.dataset.qty, this.dataset.price, this.dataset.tax, this.dataset.supplier, this.dataset.note, this.dataset.curr, this.dataset.ideal, this.dataset.warn, this.dataset.manage === 'true')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <form method="POST" action="{{ url_for('delete_item', item_id=item._id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this item?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info m-3">
+            <i class="fas fa-info-circle me-2"></i> No items found. Create your first item to get started!
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Item Modal (Classic Style matching reference screenshot) -->
+<div class="modal fade classic-modal" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Item</h5>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="help-link">Help</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('items') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Item Code:</label>
+                        <input type="text" class="classic-input" name="item_code" placeholder="" required>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Description:</label>
+                        <textarea class="classic-input" name="description" placeholder=""></textarea>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Unit Value:</label>
+                        <input type="text" class="classic-input" name="price" placeholder="₹0.00" required>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Tax:</label>
+                        <select class="classic-input" name="tax">
+                            <option value="">[None]</option>
+                            <option value="GST 5%">GST 5%</option>
+                            <option value="GST 12%">GST 12%</option>
+                            <option value="GST 18%">GST 18%</option>
+                            <option value="GST 28%">GST 28%</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="stock-checkbox-label">
+                            <input type="checkbox" name="manage_stock" id="add_manage_stock" value="1" onchange="toggleStockFields('add')">
+                            Manage the inventory stock levels
+                        </label>
+                    </div>
+                    
+                    <div class="stock-fields" id="add_stock_fields">
+                        <div class="mb-field">
+                            <label class="classic-label">Current Quantity:</label>
+                            <input type="number" class="classic-readonly" name="current_qty" id="add_current_qty" value="0">
+                        </div>
+                        
+                        <div class="mb-field">
+                            <label class="classic-label">Ideal Quantity:</label>
+                            <input type="number" class="classic-readonly" name="ideal_qty" id="add_ideal_qty" value="0">
+                        </div>
+                        
+                        <div class="mb-field">
+                            <label class="classic-label">Warning Quantity:</label>
+                            <input type="number" class="classic-readonly" name="warning_qty" id="add_warning_qty" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Supplier:</label>
+                        <select class="classic-input" name="supplier">
+                            <option value=""></option>
+                            <option value="Local Vendor">Local Vendor</option>
+                            <option value="Online Supplier">Online Supplier</option>
+                            <option value="Direct Manufacturer">Direct Manufacturer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Note:</label>
+                        <input type="text" class="classic-input" name="note" placeholder="">
+                    </div>
+                    
+                    <!-- Hidden item_name field (uses item_code as name if not provided) -->
+                    <input type="hidden" name="item_name" id="add_item_name_hidden" value="">
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-create-item">Create Item</button>
+                    <button type="button" class="btn-cancel-classic" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal (Classic Style) -->
+<div class="modal fade classic-modal" id="editItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Item</h5>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="help-link">Help</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('items') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="item_id" id="edit_item_id">
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Item Code:</label>
+                        <input type="text" class="classic-input" id="edit_item_code" name="item_code" required>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Description:</label>
+                        <textarea class="classic-input" id="edit_description" name="description"></textarea>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Unit Value:</label>
+                        <input type="text" class="classic-input" id="edit_price" name="price" required>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Tax:</label>
+                        <select class="classic-input" id="edit_tax" name="tax">
+                            <option value="">[None]</option>
+                            <option value="GST 5%">GST 5%</option>
+                            <option value="GST 12%">GST 12%</option>
+                            <option value="GST 18%">GST 18%</option>
+                            <option value="GST 28%">GST 28%</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="stock-checkbox-label">
+                            <input type="checkbox" name="manage_stock" id="edit_manage_stock" value="1" onchange="toggleStockFields('edit')">
+                            Manage the inventory stock levels
+                        </label>
+                    </div>
+                    
+                    <div class="stock-fields" id="edit_stock_fields">
+                        <div class="mb-field">
+                            <label class="classic-label">Current Quantity:</label>
+                            <input type="number" class="classic-readonly" name="current_qty" id="edit_current_qty" value="0">
+                        </div>
+                        
+                        <div class="mb-field">
+                            <label class="classic-label">Ideal Quantity:</label>
+                            <input type="number" class="classic-readonly" name="ideal_qty" id="edit_ideal_qty" value="0">
+                        </div>
+                        
+                        <div class="mb-field">
+                            <label class="classic-label">Warning Quantity:</label>
+                            <input type="number" class="classic-readonly" name="warning_qty" id="edit_warning_qty" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Supplier:</label>
+                        <select class="classic-input" id="edit_supplier" name="supplier">
+                            <option value=""></option>
+                            <option value="Local Vendor">Local Vendor</option>
+                            <option value="Online Supplier">Online Supplier</option>
+                            <option value="Direct Manufacturer">Direct Manufacturer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-field">
+                        <label class="classic-label">Note:</label>
+                        <input type="text" class="classic-input" id="edit_note" name="note">
+                    </div>
+                    
+                    <input type="hidden" name="item_name" id="edit_item_name_hidden" value="">
+                    <input type="hidden" name="quantity" id="edit_quantity_hidden" value="">
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-create-item">Update Item</button>
+                    <button type="button" class="btn-cancel-classic" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleStockFields(prefix) {
+    const checkbox = document.getElementById(prefix + '_manage_stock');
+    const fields = document.getElementById(prefix + '_stock_fields');
+    if (checkbox.checked) {
+        fields.classList.add('show');
+    } else {
+        fields.classList.remove('show');
+    }
+}
+
+// Auto-fill item_name from item_code on form submit
+document.getElementById('addItemModal').querySelector('form').addEventListener('submit', function() {
+    const codeInput = this.querySelector('[name="item_code"]');
+    const nameHidden = document.getElementById('add_item_name_hidden');
+    if (!nameHidden.value) {
+        nameHidden.value = codeInput.value;
+    }
+});
+
+function editItem(id, code, name, description, quantity, price, tax, supplier, note, currentQty, idealQty, warningQty, manageStock) {
+    document.getElementById('edit_item_id').value = id;
+    document.getElementById('edit_item_code').value = code;
+    document.getElementById('edit_item_name_hidden').value = name;
+    document.getElementById('edit_description').value = description;
+    document.getElementById('edit_quantity_hidden').value = quantity;
+    document.getElementById('edit_price').value = price;
+    document.getElementById('edit_note').value = note;
+    
+    // Set tax dropdown
+    const taxSelect = document.getElementById('edit_tax');
+    for (let i = 0; i < taxSelect.options.length; i++) {
+        if (taxSelect.options[i].value === tax) {
+            taxSelect.selectedIndex = i;
+            break;
+        }
+    }
+    
+    // Set supplier dropdown
+    const supplierSelect = document.getElementById('edit_supplier');
+    for (let i = 0; i < supplierSelect.options.length; i++) {
+        if (supplierSelect.options[i].value === supplier) {
+            supplierSelect.selectedIndex = i;
+            break;
+        }
+    }
+    
+    // Set stock management
+    const stockCheckbox = document.getElementById('edit_manage_stock');
+    stockCheckbox.checked = manageStock;
+    toggleStockFields('edit');
+    
+    document.getElementById('edit_current_qty').value = currentQty || 0;
+    document.getElementById('edit_ideal_qty').value = idealQty || 0;
+    document.getElementById('edit_warning_qty').value = warningQty || 0;
+}
+</script>
+{% endblock %}

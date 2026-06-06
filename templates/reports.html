@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Sales Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="top-navbar">
+    <div>
+        <h2 class="page-title">Sales Analytics & Reports</h2>
+        <p class="text-muted m-0">Review product sales metrics, tax totals, client spending, and download reports.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('export_report', start_date=start_date, end_date=end_date) }}" class="btn btn-red">
+            <i class="fas fa-file-export me-2"></i> Export CSV Report
+        </a>
+    </div>
+</div>
+
+<!-- Date Filter Panel -->
+<div class="custom-card mb-4">
+    <form method="GET" action="{{ url_for('reports') }}">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <label for="start_date" class="form-label text-muted small">From Date</label>
+                <input type="date" name="start_date" id="start_date" class="form-control form-control-custom" value="{{ start_date }}" required>
+            </div>
+            <div class="col-md-5">
+                <label for="end_date" class="form-label text-muted small">To Date</label>
+                <input type="date" name="end_date" id="end_date" class="form-control form-control-custom" value="{{ end_date }}" required>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-red w-100 py-2">Apply Filters</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Summary stats for selected range -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-info">
+                <h6>Net Revenue (Excl. Tax)</h6>
+                <h3 class="text-primary">₹{{ "{:,.2f}".format(totals.total) }}</h3>
+            </div>
+            <div class="metric-icon">
+                <i class="fas fa-hand-holding-dollar text-primary"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-info">
+                <h6>GST / Tax Collected</h6>
+                <h3>₹{{ "{:,.2f}".format(totals.tax) }}</h3>
+            </div>
+            <div class="metric-icon">
+                <i class="fas fa-percent text-warning"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-info">
+                <h6>Gross Revenue (Incl. Tax)</h6>
+                <h3 class="text-primary">₹{{ "{:,.2f}".format(totals.total) }}</h3>
+            </div>
+            <div class="metric-icon" style="background-color: rgba(239, 68, 68, 0.15);">
+                <i class="fas fa-hand-holding-dollar text-primary"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Top Selling Products -->
+    <div class="col-md-6">
+        <div class="custom-card h-100">
+            <div class="custom-card-header">
+                <h5 class="custom-card-title"><i class="fas fa-box-open me-2 text-primary"></i> Top Selling Products</h5>
+            </div>
+            <div class="table-responsive">
+                {% if top_products %}
+                    <table class="table table-dark table-striped align-middle small">
+                        <thead>
+                            <tr class="text-muted">
+                                <th>#</th>
+                                <th>Product</th>
+                                <th>Units Sold</th>
+                                <th class="text-end">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod in top_products %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td class="font-weight-bold text-dark">{{ prod._id }}</td>
+                                    <td>{{ prod.total_sold }} units</td>
+                                    <td class="text-end text-dark font-weight-bold">₹{{ "{:,.2f}".format(prod.revenue) }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <p class="m-0">No product sales in this period.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Spending Customers -->
+    <div class="col-md-6">
+        <div class="custom-card h-100">
+            <div class="custom-card-header">
+                <h5 class="custom-card-title"><i class="fas fa-user-tie me-2 text-primary"></i> Top Spending Customers</h5>
+            </div>
+            <div class="table-responsive">
+                {% if customer_report %}
+                    <table class="table table-dark table-striped align-middle small">
+                        <thead>
+                            <tr class="text-muted">
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th class="text-end">Invoices</th>
+                                <th class="text-end">Total Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cust in customer_report %}
+                                <tr>
+                                    <td class="font-weight-bold text-dark">{{ cust.name }}</td>
+                                    <td>{{ cust.phone }}</td>
+                                    <td class="text-end font-monospace">{{ cust.invoice_count }}</td>
+                                    <td class="text-end text-dark font-weight-bold">₹{{ "{:,.2f}".format(cust.total_spent) }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <p class="m-0">No client transactions in this period.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Daily Sales Breakdown Table -->
+<div class="custom-card">
+    <div class="custom-card-header">
+        <h5 class="custom-card-title"><i class="fas fa-calendar-alt me-2 text-primary"></i> Daily Revenue Breakdown</h5>
+    </div>
+    <div class="custom-table-container">
+        {% if daily_sales %}
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Transaction Date</th>
+                        <th>Invoices Count</th>
+                        <th class="text-end">Daily Net Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in daily_sales %}
+                        <tr>
+                            <td class="font-weight-bold text-dark">{{ day._id }}</td>
+                            <td>{{ day.count }} invoice(s)</td>
+                            <td class="text-end text-primary font-weight-bold">₹{{ "{:,.2f}".format(day.revenue) }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <p>No billing data logged in this range.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
