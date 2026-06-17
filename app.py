@@ -413,6 +413,7 @@ def create_invoice():
         descriptions = request.form.getlist('item_description[]')
         quantities = request.form.getlist('item_quantity[]')
         prices = request.form.getlist('item_price[]')
+        discounts = request.form.getlist('item_discount[]')
         
         if not customer_name or not product_ids:
             flash('Customer Name and at least one Product are required.', 'danger')
@@ -468,7 +469,10 @@ def create_invoice():
                 return redirect(url_for('create_invoice'))
                 
             item_subtotal = qty * price
-            subtotal += item_subtotal
+            discount_pct = float(discounts[i]) if i < len(discounts) else 0.0
+            discount_amount = item_subtotal * (discount_pct / 100.0)
+            item_after_discount = item_subtotal - discount_amount
+            subtotal += item_after_discount
             
             items.append({
                 "product_id": ObjectId(pid),
@@ -477,7 +481,9 @@ def create_invoice():
                 "description": desc,
                 "quantity": qty,
                 "price": price,
-                "subtotal": item_subtotal
+                "discount_pct": discount_pct,
+                "discount_amount": discount_amount,
+                "subtotal": item_after_discount
             })
             
             if db_item.get('manage_stock'):
@@ -1092,22 +1098,26 @@ def download_invoice_pdf(invoice_id):
             Paragraph("Qty", items_header_style),
             Paragraph("Description", items_header_style),
             Paragraph("Unit Price", items_header_style),
+            Paragraph("Discount", items_header_style),
             Paragraph("Total", items_header_style)
         ]]
         for item in invoice['items']:
+            disc_pct = item.get('discount_pct', 0)
+            disc_display = f"{disc_pct:.1f}%" if disc_pct else "-"
             items_data.append([
                 Paragraph(str(item['quantity']), items_cell_style),
                 # Show description from the items collection
                 Paragraph(f"{item.get('description') or item.get('product_name')} [ {item.get('product_code', '')} ]", items_cell_style),
                 Paragraph(f"Rs.{item['price']:,.2f}", ParagraphStyle('Price', parent=items_cell_style, alignment=2)),
+                Paragraph(disc_display, ParagraphStyle('Disc', parent=items_cell_style, alignment=1)),
                 Paragraph(f"Rs.{item['subtotal']:,.2f}", ParagraphStyle('Total', parent=items_cell_style, alignment=2))
             ])
         
         # Add empty rows for visual spacing (like the reference)
         for _ in range(max(0, 10 - len(invoice['items']))):
-            items_data.append(['', '', '', ''])
+            items_data.append(['', '', '', '', ''])
         
-        items_table = Table(items_data, colWidths=[0.6*inch, 3.4*inch, 1.3*inch, 1.5*inch])
+        items_table = Table(items_data, colWidths=[0.6*inch, 2.8*inch, 1.2*inch, 0.9*inch, 1.3*inch])
         items_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#888888')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -1129,17 +1139,27 @@ def download_invoice_pdf(invoice_id):
         total_label_style = ParagraphStyle('TotalLabel', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', alignment=2)
         total_value_style = ParagraphStyle('TotalValue', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', alignment=2)
         
-        totals_data = [
-            ['', '', Paragraph("<b>Total</b>", total_label_style), Paragraph(f"<b>Rs.{invoice['grand_total']:,.2f}</b>", total_value_style)],
-            ['', '', Paragraph("<b>Balance</b>", total_label_style), Paragraph(f"<b>Rs.{invoice['grand_total']:,.2f}</b>", total_value_style)],
-        ]
+        # Calculate total discount for display
+        total_discount = sum(item.get('discount_amount', 0) for item in invoice['items'])
         
-        totals_table = Table(totals_data, colWidths=[0.6*inch, 3.4*inch, 1.3*inch, 1.5*inch])
+        totals_data = []
+        if total_discount > 0:
+            totals_data.append(
+                ['', '', '', Paragraph('<b>Discount</b>', ParagraphStyle('DiscLabel', parent=total_label_style, textColor=colors.HexColor('#dc3545'))), Paragraph(f'<b>- Rs.{total_discount:,.2f}</b>', ParagraphStyle('DiscVal', parent=total_value_style, textColor=colors.HexColor('#dc3545')))]
+            )
+        totals_data.append(
+            ['', '', '', Paragraph("<b>Total</b>", total_label_style), Paragraph(f"<b>Rs.{invoice['grand_total']:,.2f}</b>", total_value_style)]
+        )
+        totals_data.append(
+            ['', '', '', Paragraph("<b>Balance</b>", total_label_style), Paragraph(f"<b>Rs.{invoice['grand_total']:,.2f}</b>", total_value_style)]
+        )
+        
+        totals_table = Table(totals_data, colWidths=[0.6*inch, 2.8*inch, 1.2*inch, 0.9*inch, 1.3*inch])
         totals_table.setStyle(TableStyle([
-            ('ALIGN', (2, 0), (3, -1), 'RIGHT'),
-            ('FONTNAME', (2, 0), (3, -1), 'Helvetica-Bold'),
+            ('ALIGN', (3, 0), (4, -1), 'RIGHT'),
+            ('FONTNAME', (3, 0), (4, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('LINEBELOW', (2, -1), (3, -1), 1, colors.black),
+            ('LINEBELOW', (3, -1), (4, -1), 1, colors.black),
         ]))
         elements.append(totals_table)
         elements.append(Spacer(1, 0.4*inch))

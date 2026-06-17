@@ -94,6 +94,7 @@
                         <th>Code</th>
                         <th class="text-end">Unit Price</th>
                         <th class="text-end">Qty</th>
+                        <th class="text-end">Discount (%)</th>
                         <th class="text-end">Total Amount</th>
                     </tr>
                 </thead>
@@ -105,6 +106,7 @@
                             <td><span class="badge bg-secondary font-monospace">{{ item.product_code }}</span></td>
                             <td class="text-end">₹{{ "{:,.2f}".format(item.price) }}</td>
                             <td class="text-end font-monospace">{{ item.quantity }}</td>
+                            <td class="text-end">{% if item.discount_pct %}{{ "{:.1f}".format(item.discount_pct) }}%{% else %}-{% endif %}</td>
                             <td class="text-end text-dark font-weight-bold">₹{{ "{:,.2f}".format(item.subtotal) }}</td>
                         </tr>
                     {% endfor %}
@@ -138,6 +140,13 @@
                             <td class="text-muted px-0">Subtotal:</td>
                             <td class="text-end px-0">₹{{ "{:,.2f}".format(invoice.subtotal) }}</td>
                         </tr>
+                        {% set total_discount = invoice.items | sum(attribute='discount_amount', default=0) %}
+                        {% if total_discount > 0 %}
+                        <tr>
+                            <td class="px-0" style="color: #dc3545;">Discount:</td>
+                            <td class="text-end px-0" style="color: #dc3545;">- ₹{{ "{:,.2f}".format(total_discount) }}</td>
+                        </tr>
+                        {% endif %}
                         <tr>
                             <td class="text-muted px-0">Tax ({{ invoice.tax_rate }}%):</td>
                             <td class="text-end px-0">₹{{ "{:,.2f}".format(invoice.tax_amount) }}</td>

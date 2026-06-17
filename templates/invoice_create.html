@@ -496,12 +496,13 @@
             <table class="table-invoice-items">
                 <thead>
                     <tr>
-                        <th style="width: 8%;">Qty</th>
-                        <th style="width: 20%;">Item Code</th>
-                        <th style="width: 40%;">Description</th>
-                        <th style="width: 14%;">Unit Price</th>
+                        <th style="width: 7%;">Qty</th>
+                        <th style="width: 16%;">Item Code</th>
+                        <th style="width: 32%;">Description</th>
+                        <th style="width: 12%;">Unit Price</th>
                         <th style="width: 10%;">Tax (%)</th>
-                        <th style="width: 14%;">Total</th>
+                        <th style="width: 10%;">Discount (%)</th>
+                        <th style="width: 12%;">Total</th>
                         <th style="width: 4%;"></th>
                     </tr>
                 </thead>
@@ -557,6 +558,10 @@
                     <div class="totals-row">
                         <div class="totals-label">Subtotal:</div>
                         <div class="totals-val">₹<span id="display_subtotal">0.00</span></div>
+                    </div>
+                    <div class="totals-row">
+                        <div class="totals-label" style="color: #dc3545;">Discount:</div>
+                        <div class="totals-val" style="color: #dc3545;">- ₹<span id="display_discount_total">0.00</span></div>
                     </div>
                     <div class="totals-row">
                         <div class="totals-label">GST / Tax rate:</div>
@@ -689,23 +694,31 @@ function openInvoicePreview() {
     const rows = document.querySelectorAll('#invoice-items-body tr');
     let itemsHTML = '';
     let rowCount = 0;
+    let previewTotalDiscount = 0;
     rows.forEach(function(row) {
         const qtyInput = row.querySelector('input[name="item_quantity[]"]');
         const descInput = row.querySelector('input[name="item_description[]"]');
         const priceInput = row.querySelector('input[name="item_price[]"]');
         const codeInput = row.querySelector('input[name="item_code[]"]');
+        const discInput = row.querySelector('input[name="item_discount[]"]');
         if (!qtyInput || !priceInput) return;
         const qty = parseInt(qtyInput.value) || 0;
         const price = parseFloat(priceInput.value) || 0;
+        const discPct = discInput ? (parseFloat(discInput.value) || 0) : 0;
         const desc = (descInput ? descInput.value : '') || '';
         const code = (codeInput ? codeInput.value : '') || '';
         if (qty <= 0 && price <= 0) return;
-        const total = qty * price;
+        const baseAmt = qty * price;
+        const discAmt = baseAmt * (discPct / 100);
+        previewTotalDiscount += discAmt;
+        const total = baseAmt - discAmt;
         const label = desc ? desc + (code ? ' [ ' + code + ' ]' : '') : (code || 'Item');
+        const discDisplay = discPct > 0 ? discPct.toFixed(1) + '%' : '-';
         itemsHTML += '<tr>'
             + '<td style="text-align:center;">' + qty + '</td>'
             + '<td>' + label + '</td>'
             + '<td style="text-align:right;">' + formatCurrency(price) + '</td>'
+            + '<td style="text-align:center;">' + discDisplay + '</td>'
             + '<td style="text-align:right;">' + formatCurrency(total) + '</td>'
             + '</tr>';
         rowCount++;
@@ -714,7 +727,7 @@ function openInvoicePreview() {
     // Add empty rows to fill space (like the PDF)
     const minRows = 10;
     for (let i = rowCount; i < minRows; i++) {
-        itemsHTML += '<tr class="empty-row"><td></td><td></td><td></td><td></td></tr>';
+        itemsHTML += '<tr class="empty-row"><td></td><td></td><td></td><td></td><td></td></tr>';
     }
     
     // Get totals from the display
@@ -757,8 +770,9 @@ function openInvoicePreview() {
         + '<table class="inv-items-table">'
         + '  <thead><tr>'
         + '    <th style="width:8%;text-align:center;">Qty</th>'
-        + '    <th style="width:52%;">Description</th>'
-        + '    <th style="width:20%;text-align:right;">Unit Price</th>'
+        + '    <th style="width:40%;">Description</th>'
+        + '    <th style="width:18%;text-align:right;">Unit Price</th>'
+        + '    <th style="width:14%;text-align:center;">Discount</th>'
         + '    <th style="width:20%;text-align:right;">Total</th>'
         + '  </tr></thead>'
         + '  <tbody>' + itemsHTML + '</tbody>'
@@ -766,6 +780,7 @@ function openInvoicePreview() {
         // Totals
         + '<div class="inv-totals">'
         + '  <table>'
+        + (previewTotalDiscount > 0 ? '    <tr><td class="label-cell" style="color:#dc3545;">Discount</td><td class="value-cell" style="color:#dc3545;">- ' + formatCurrency(previewTotalDiscount) + '</td></tr>' : '')
         + '    <tr><td class="label-cell">Total</td><td class="value-cell">₹' + grandTotal + '</td></tr>'
         + '    <tr><td class="label-cell">Balance</td><td class="value-cell">₹' + grandTotal + '</td></tr>'
         + '  </table>'

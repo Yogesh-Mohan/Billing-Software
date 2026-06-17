@@ -57,6 +57,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 </select>
             </td>
             <td>
+                <input type="number" name="item_discount[]" class="form-control form-control-custom discount-input" step="0.01" min="0" max="100" value="0" placeholder="0">
+            </td>
+            <td>
                 <input type="number" class="form-control form-control-custom subtotal-input" step="0.01" value="0.00" readonly>
             </td>
             <td>
@@ -73,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const desc = row.querySelector('.description-input');
         const removeBtn = row.querySelector('.remove-row-btn');
         const rowTaxSelect = row.querySelector('.row-tax-select');
+        const discountInput = row.querySelector('.discount-input');
         const warningEl = row.querySelector('.stock-warning');
 
         codeInput.addEventListener('input', function () {
@@ -129,6 +133,10 @@ document.addEventListener('DOMContentLoaded', function () {
             calculateRowSubtotal(row);
         });
 
+        discountInput.addEventListener('input', function () {
+            calculateRowSubtotal(row);
+        });
+
         removeBtn.addEventListener('click', function () {
             row.remove();
             calculateInvoiceTotals();
@@ -138,17 +146,27 @@ document.addEventListener('DOMContentLoaded', function () {
     function calculateRowSubtotal(row) {
         const qty = parseInt(row.querySelector('.quantity-input').value) || 0;
         const price = parseFloat(row.querySelector('.price-input').value) || 0;
-        const subtotal = qty * price;
+        const discountPct = parseFloat(row.querySelector('.discount-input').value) || 0;
+        const baseAmount = qty * price;
+        const discountAmount = baseAmount * (discountPct / 100);
+        const subtotal = baseAmount - discountAmount;
         row.querySelector('.subtotal-input').value = subtotal.toFixed(2);
         calculateInvoiceTotals();
     }
 
     function calculateInvoiceTotals() {
         let subtotalSum = 0;
-        const subtotalInputs = document.querySelectorAll('.subtotal-input');
+        let totalDiscount = 0;
+        const rows = document.querySelectorAll('.invoice-item-row');
         
-        subtotalInputs.forEach(function (input) {
-            subtotalSum += parseFloat(input.value) || 0;
+        rows.forEach(function (row) {
+            const qty = parseInt(row.querySelector('.quantity-input').value) || 0;
+            const price = parseFloat(row.querySelector('.price-input').value) || 0;
+            const discountPct = parseFloat(row.querySelector('.discount-input').value) || 0;
+            const baseAmount = qty * price;
+            const discountAmount = baseAmount * (discountPct / 100);
+            totalDiscount += discountAmount;
+            subtotalSum += parseFloat(row.querySelector('.subtotal-input').value) || 0;
         });
 
         const taxRate = parseFloat(taxRateInput.value) || 0;
@@ -156,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const grandTotal = subtotalSum + taxAmount;
 
         document.getElementById('display_subtotal').innerText = subtotalSum.toFixed(2);
+        document.getElementById('display_discount_total').innerText = totalDiscount.toFixed(2);
         document.getElementById('display_tax_amount').innerText = taxAmount.toFixed(2);
         document.getElementById('display_grand_total').innerText = grandTotal.toFixed(2);
     }
