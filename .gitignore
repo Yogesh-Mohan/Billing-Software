@@ -1,0 +1,13 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Firebase credentials file (highly sensitive)
+billingsystem-*.json
+
+# Local envs / data
+data/
+instance/
+.web/
+*.log
