@@ -272,8 +272,18 @@ class FileCollection:
             data = self._read()
         return sum(1 for doc in data if self._match(doc, query or {}))
 
+    def _resolve_field(self, doc, field_path):
+        """Resolve a dot-notation field path like 'customer.name' or 'items.quantity'."""
+        value = doc
+        for part in field_path.split('.'):
+            if isinstance(value, dict):
+                value = value.get(part)
+            else:
+                return None
+        return value
+
     def aggregate(self, pipeline):
-        """Simple aggregate support for $match, $group, $sort, $limit, $addFields."""
+        """Aggregate support for $match, $group, $sort, $limit, $addFields, $unwind."""
         with self._lock:
             data = self._read()
         docs = [deepcopy(d) for d in data]
@@ -281,37 +291,74 @@ class FileCollection:
         for stage in pipeline:
             if "$match" in stage:
                 docs = [d for d in docs if self._match(d, stage["$match"])]
+            elif "$unwind" in stage:
+                # Flatten an array field into separate documents
+                field = stage["$unwind"]
+                if isinstance(field, dict):
+                    field = field.get("path", "")
+                field = field.lstrip("$")
+                unwound = []
+                for doc in docs:
+                    arr = self._resolve_field(doc, field)
+                    if isinstance(arr, list):
+                        for item in arr:
+                            new_doc = deepcopy(doc)
+                            # Set the unwound field to the individual item
+                            parts = field.split('.')
+                            target = new_doc
+                            for part in parts[:-1]:
+                                target = target.setdefault(part, {})
+                            target[parts[-1]] = item
+                            unwound.append(new_doc)
+                    else:
+                        unwound.append(deepcopy(doc))
+                docs = unwound
             elif "$group" in stage:
                 group = stage["$group"]
                 group_id = group.get("_id")
                 result = {}
 
                 for doc in docs:
-                    # For _id: None, group everything together
+                    # Determine group key
                     if group_id is None:
                         key = None
                     elif isinstance(group_id, dict) and "$dateToString" in group_id:
                         date_field = group_id["$dateToString"]["date"].replace("$", "")
-                        dt_val = doc.get(date_field)
+                        dt_val = self._resolve_field(doc, date_field)
                         if isinstance(dt_val, datetime):
                             fmt = group_id["$dateToString"].get("format", "%Y-%m-%d")
                             key = dt_val.strftime(fmt)
                         else:
                             key = str(dt_val)
+                    elif isinstance(group_id, str) and group_id.startswith("$"):
+                        key = str(self._resolve_field(doc, group_id[1:]) or "")
                     else:
-                        key = str(doc.get(str(group_id).replace("$", ""), ""))
+                        key = str(self._resolve_field(doc, str(group_id).replace("$", "")) or "")
+                    
                     if key not in result:
                         result[key] = {"_id": key}
+                    
                     for field, expr in group.items():
                         if field == "_id":
                             continue
-                        if isinstance(expr, dict) and "$sum" in expr:
-                            sum_field = expr["$sum"]
-                            if isinstance(sum_field, str) and sum_field.startswith("$"):
-                                val = doc.get(sum_field[1:], 0)
-                            else:
-                                val = sum_field
-                            result[key][field] = result[key].get(field, 0) + (val if isinstance(val, (int, float)) else 0)
+                        if isinstance(expr, dict):
+                            if "$sum" in expr:
+                                sum_field = expr["$sum"]
+                                if isinstance(sum_field, str) and sum_field.startswith("$"):
+                                    val = self._resolve_field(doc, sum_field[1:])
+                                    if val is None:
+                                        val = 0
+                                else:
+                                    val = sum_field
+                                result[key][field] = result[key].get(field, 0) + (val if isinstance(val, (int, float)) else 0)
+                            elif "$first" in expr:
+                                # Only set if not already set (keep first value)
+                                if field not in result[key]:
+                                    first_field = expr["$first"]
+                                    if isinstance(first_field, str) and first_field.startswith("$"):
+                                        result[key][field] = self._resolve_field(doc, first_field[1:])
+                                    else:
+                                        result[key][field] = first_field
 
                 docs = list(result.values())
             elif "$sort" in stage:
@@ -327,7 +374,7 @@ class FileCollection:
                             src = expr["$toInt"]
                             if isinstance(src, str) and src.startswith("$"):
                                 try:
-                                    doc[field] = int(doc.get(src[1:], 0))
+                                    doc[field] = int(self._resolve_field(doc, src[1:]) or 0)
                                 except (ValueError, TypeError):
                                     doc[field] = 0
 

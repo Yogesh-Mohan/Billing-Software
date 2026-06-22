@@ -652,7 +652,7 @@ def invoices():
 def invoice_view(invoice_id):
     try:
         invoice = db.invoices.find_one({"_id": ObjectId(invoice_id)})
-    except:
+    except Exception:
         invoice = None
     
     if not invoice:
@@ -924,7 +924,7 @@ def get_item(item_code):
 def download_invoice_pdf(invoice_id):
     try:
         invoice = db.invoices.find_one({"_id": ObjectId(invoice_id)})
-    except:
+    except Exception:
         invoice = None
     
     if not invoice:
