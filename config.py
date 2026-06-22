@@ -15,7 +15,6 @@ class Config:
         )
     SECRET_KEY = _default_key or secrets.token_hex(32)
     
-    MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/')
     DB_NAME = os.environ.get('DB_NAME', 'red_studio_billing')
     # Default warning threshold for stock levels
     LOW_STOCK_THRESHOLD = 10

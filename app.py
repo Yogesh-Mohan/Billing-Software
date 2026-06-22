@@ -7,12 +7,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response, send_from_directory, send_file
 from werkzeug.utils import secure_filename
-try:
-    from pymongo import MongoClient
-    from bson.objectid import ObjectId
-except ImportError:
-    MongoClient = None
-    ObjectId = None
+ObjectId = FileObjectId
 import bcrypt
 from file_db import FileClient, FileObjectId
 from config import Config
@@ -36,7 +31,7 @@ UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Database Setup — Try Firebase first, then MongoDB, fall back to file-based DB
+# Database Setup — Try Firebase first, fall back to file-based DB
 USE_FILE_DB = False
 USE_FIREBASE = False
 firebase_creds = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
@@ -56,47 +51,17 @@ if firebase_creds:
         from firebase_db import FirestoreClient
         client = FirestoreClient(firebase_creds)
         db = client[app.config.get('DB_NAME', 'red_studio_billing')]
-        ObjectId = FileObjectId
         USE_FIREBASE = True
         print("[OK] Connected to Firebase Firestore successfully!")
     except Exception as e:
         print(f"[WARN] Cannot connect to Firebase: {e}")
 
 if not USE_FIREBASE:
-    mongo_uri = app.config.get('MONGO_URI', '')
-    if MongoClient is None:
-        # pymongo not installed — use file DB
-        print("[INFO] pymongo not installed. Using file-based database.")
-        USE_FILE_DB = True
-    elif mongo_uri and mongo_uri != 'mongodb://localhost:27017/' and 'localhost' not in mongo_uri:
-        # Try connecting to remote MongoDB
-        try:
-            client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
-            client.server_info()
-            db = client[app.config['DB_NAME']]
-            print("[OK] Connected to MongoDB successfully!")
-        except Exception as e:
-            print(f"[WARN] Cannot connect to MongoDB: {e}")
-            print("[INFO] Falling back to file-based database...")
-            USE_FILE_DB = True
-    else:
-        # Try local MongoDB, fall back to file DB
-        try:
-            client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=2000)
-            client.server_info()
-            db = client[app.config['DB_NAME']]
-            print("[OK] Connected to local MongoDB!")
-        except Exception:
-            print("[INFO] No MongoDB found. Using file-based database.")
-            USE_FILE_DB = True
-
-    if USE_FILE_DB:
-        data_dir = os.path.join(app.root_path, 'data')
-        client = FileClient(data_dir)
-        db = client[app.config['DB_NAME']]
-        # Use FileObjectId instead of bson.ObjectId
-        ObjectId = FileObjectId
-        print(f"[OK] File-based database ready at: {data_dir}")
+    USE_FILE_DB = True
+    data_dir = os.path.join(app.root_path, 'data')
+    client = FileClient(data_dir)
+    db = client[app.config.get('DB_NAME', 'red_studio_billing')]
+    print(f"[OK] File-based database ready at: {data_dir}")
 
 # Helper to check if user is logged in
 def login_required(f):
