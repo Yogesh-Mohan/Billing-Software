@@ -7,7 +7,7 @@ RED STUDIO is a fast, responsive, and modern billing management web application 
 ## Technical Stack
 - **Frontend**: HTML5, CSS3, Bootstrap 5, Javascript, FontAwesome, Chart.js
 - **Backend**: Python (Flask)
-- **Database**: MongoDB (via PyMongo)
+- **Database**: Firebase Firestore (with local File-based DB fallback)
 
 ---
 
@@ -15,10 +15,10 @@ RED STUDIO is a fast, responsive, and modern billing management web application 
 ```
 red_studio/
 ├── app.py                  # Main Flask application server script
-├── config.py               # Setup parameters (MongoDB URIs, Keys, low-stock threshold)
+├── config.py               # Setup parameters (Keys, low-stock threshold)
 ├── requirements.txt        # Backend dependencies
-├── db_seed.py              # MongoDB indices creation and administrator account seeding
-├── database_schema_doc.md  # MongoDB Schema documentation (equivalent to SQL schema file)
+├── seed_firebase.py        # Firebase seeding and administrator account seeding
+├── database_schema_doc.md  # Firebase Schema documentation (equivalent to SQL schema file)
 ├── templates/              # MVC Views / HTML Layouts
 │   ├── base.html           # Core layout structure with responsive navigation sidebar
 │   ├── login.html          # Administrator login portal
@@ -52,7 +52,7 @@ When you run the database seeding script, it creates a default administrator pro
 
 ### 1. Prerequisites
 - **Python 3.8+** must be installed.
-- **MongoDB** must be installed and running locally on standard port `27017` (or configured via environment variables).
+- **Firebase Project**: A Firebase Firestore project configured.
 
 ### 2. Set Up Virtual Environment (Optional but recommended)
 Open terminal/cmd inside the project workspace directory and run:
@@ -69,9 +69,9 @@ pip install -r requirements.txt
 ```
 
 ### 4. Seed the Database
-Run the seeding script to create database structures, indices, default admin settings, and sample mock items:
+Run the seeding script to create database structures, default admin settings, and sample mock items in Firebase Firestore:
 ```bash
-python db_seed.py
+python seed_firebase.py
 ```
 
 ### 5. Launch the Web Application

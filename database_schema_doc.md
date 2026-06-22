@@ -1,6 +1,6 @@
 # RED STUDIO - Database Schema Documentation
 
-Since RED STUDIO uses **MongoDB**, a flexible NoSQL document database, data is stored in JSON-like collections instead of SQL tables. Below is the schema documentation representing the collections, field types, and relations.
+Since RED STUDIO uses **Firebase Firestore**, a flexible NoSQL cloud database, data is stored in Firestore collections instead of SQL tables. Below is the schema documentation representing the collections, field types, and relations.
 
 ---
 
