@@ -7,10 +7,17 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from file_db import FileCollection, FileCursor, FileObjectId, InsertOneResult, UpdateResult, DeleteResult
 
+class DummyLock:
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
 class FirestoreCollection(FileCollection):
     def __init__(self, db, name):
         self.name = name
         self.collection_ref = db.collection(name)
+        self._lock = DummyLock()
 
     def _read(self):
         docs = []
