@@ -486,6 +486,14 @@ def create_invoice():
         tax_amount = subtotal * (tax_rate / 100.0)
         grand_total = subtotal + tax_amount
         
+        amount_paid_str = request.form.get('amount_paid', '0').strip()
+        try:
+            amount_paid = float(amount_paid_str) if amount_paid_str else 0.0
+        except ValueError:
+            amount_paid = 0.0
+            
+        balance_due = max(0.0, grand_total - amount_paid)
+        
         # Generate Invoice Number automatically if not specified manually
         invoice_date = datetime.strptime(invoice_date_str, '%Y-%m-%d') if invoice_date_str else datetime.utcnow()
         if not invoice_number:
@@ -541,6 +549,8 @@ def create_invoice():
             "tax_rate": tax_rate,
             "tax_amount": tax_amount,
             "grand_total": grand_total,
+            "amount_paid": amount_paid,
+            "balance_due": balance_due,
             "created_at": datetime.utcnow()
         }
         
@@ -928,17 +938,29 @@ def download_invoice_pdf(invoice_id):
         from reportlab.lib import colors
         
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.6*inch, rightMargin=0.6*inch)
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=1.5*inch, leftMargin=0.6*inch, rightMargin=0.6*inch)
         elements = []
 
         def draw_page_border(canvas, doc_obj):
             canvas.saveState()
-            canvas.setStrokeColor(colors.HexColor('#7f7f7f'))
-            canvas.setLineWidth(1.2)
-            canvas.rect(doc_obj.leftMargin - 0.08 * inch, doc_obj.bottomMargin - 0.08 * inch,
-                        A4[0] - doc_obj.leftMargin - doc_obj.rightMargin + 0.16 * inch,
-                        A4[1] - doc_obj.topMargin - doc_obj.bottomMargin + 0.16 * inch,
+            canvas.setStrokeColor(colors.HexColor('#d32f2f'))
+            canvas.setLineWidth(1.5)
+            # Outer red border
+            canvas.rect(doc_obj.leftMargin - 0.2 * inch, 0.3 * inch,
+                        A4[0] - doc_obj.leftMargin - doc_obj.rightMargin + 0.4 * inch,
+                        A4[1] - 0.6 * inch,
                         stroke=1, fill=0)
+            
+            # Dotted footer line
+            canvas.setDash(2, 2)
+            dotted_y = doc_obj.bottomMargin - 0.1 * inch
+            canvas.line(doc_obj.leftMargin, dotted_y,
+                        A4[0] - doc_obj.rightMargin, dotted_y)
+            
+            # Draw footer table
+            footer_table.wrapOn(canvas, A4[0] - doc_obj.leftMargin - doc_obj.rightMargin, doc_obj.bottomMargin)
+            footer_table.drawOn(canvas, doc_obj.leftMargin, 0.4 * inch)
+            
             canvas.restoreState()
         
         styles = getSampleStyleSheet()
@@ -1005,25 +1027,42 @@ def download_invoice_pdf(invoice_id):
         left_elements.append(Paragraph(BUSINESS_ADDRESS, address_style))
         
         # Right column: Invoice badge + details
+        from reportlab.graphics.shapes import Drawing, Circle, Rect, Polygon, Path
+        def get_slashes():
+            d = Drawing(40, 30)
+            for i in range(3):
+                p = Path(fillColor=colors.HexColor('#d32f2f'), strokeColor=None)
+                p.moveTo(5 + i*8, 0); p.lineTo(9 + i*8, 0); p.lineTo(17 + i*8, 30); p.lineTo(13 + i*8, 30); p.closePath()
+                d.add(p)
+            return d
+
         right_elements = []
-        right_elements.append(Paragraph('<font color="white" bgcolor="#ff1f1f">&nbsp;Invoice&nbsp;</font>', ParagraphStyle(
-            'InvBadge',
-            parent=styles['Normal'],
-            fontSize=14,
-            textColor=colors.white,
-            fontName='Helvetica-Bold',
-            alignment=2,
-            spaceAfter=8,
-            backColor=colors.HexColor('#ff1f1f')
-        )))
+        inv_badge = Table([[get_slashes(), Paragraph('<font color="white"><b>INVOICE</b></font>', ParagraphStyle('InvT', parent=styles['Normal'], fontSize=18, alignment=1))]], colWidths=[0.6*inch, 2.2*inch])
+        inv_badge.setStyle(TableStyle([('BACKGROUND', (1,0), (1,0), colors.HexColor('#d32f2f')), ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('RIGHTPADDING', (0,0), (-1,-1), 0), ('LEFTPADDING', (0,0), (-1,-1), 0)]))
+        inv_badge.hAlign = 'RIGHT'
         
-        right_elements.append(Paragraph(f"<b>Date:</b>&nbsp;&nbsp;&nbsp;&nbsp;{invoice['invoice_date'].strftime('%d %b %Y')}", date_style))
-        right_elements.append(Paragraph(f"<b>Invoice No.:</b>&nbsp;&nbsp;&nbsp;&nbsp;{invoice['invoice_number']}", date_style))
+        right_elements.append(inv_badge)
+        right_elements.append(Spacer(1, 15))
         
-        # Due date (if payment_days exists)
-        payment_days = int(invoice.get('payment_days', 30) or 30)
-        due_date = invoice['invoice_date'] + timedelta(days=payment_days)
-        right_elements.append(Paragraph(f"<b>Due Date:</b>&nbsp;&nbsp;&nbsp;&nbsp;{due_date.strftime('%d %b %Y')}", date_style))
+        due_date = invoice['invoice_date'] + timedelta(days=int(invoice.get('payment_days', 30) or 30))
+        meta_data = [
+            ["Date", ":", invoice['invoice_date'].strftime('%d %b %Y')],
+            ["Invoice No.", ":", str(invoice['invoice_number'])],
+            ["Due Date", ":", due_date.strftime('%d %b %Y')]
+        ]
+        meta_table = Table(meta_data, colWidths=[0.9*inch, 0.2*inch, 1.7*inch])
+        meta_table.setStyle(TableStyle([
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('FONTNAME', (0,0), (1,-1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 9),
+            ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+            ('TOPPADDING', (0,0), (-1,-1), 2)
+        ]))
+        meta_table.hAlign = 'RIGHT'
+        
+        right_elements.append(meta_table)
         
         # Create a header table with left and right columns
         from reportlab.platypus import KeepTogether
@@ -1038,44 +1077,42 @@ def download_invoice_pdf(invoice_id):
         
         header_table = Table(
             [[left_cell, right_cell]],
-            colWidths=[3.5*inch, 3.3*inch]
+            colWidths=[4.0*inch, 2.8*inch]
         )
         header_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
         ]))
+        header_table.hAlign = 'LEFT'
         elements.append(header_table)
         elements.append(Spacer(1, 0.25*inch))
         
         # Bill To section
-        bill_to_header_style = ParagraphStyle(
-            'BillToHeader',
-            parent=styles['Normal'],
-            fontSize=9,
-            fontName='Helvetica-Bold',
-            textColor=colors.black,
-            spaceAfter=4
-        )
+        def get_user_icon():
+            d = Drawing(30, 30)
+            d.add(Circle(15, 15, 15, fillColor=colors.HexColor('#d32f2f'), strokeColor=None))
+            d.add(Circle(15, 19, 4.5, fillColor=colors.white, strokeColor=None))
+            p = Path(fillColor=colors.white, strokeColor=None)
+            p.moveTo(15, 13); p.lineTo(9, 13); p.lineTo(7, 7); p.lineTo(7, 5); p.lineTo(23, 5); p.lineTo(23, 7); p.lineTo(21, 13); p.closePath()
+            d.add(p)
+            return d
+
+        bill_to_header_style = ParagraphStyle('BillToHeader', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', textColor=colors.HexColor('#d32f2f'), spaceAfter=4)
+        bill_to_name_style = ParagraphStyle('BillToName', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', textColor=colors.black, spaceAfter=2)
+        bill_to_style = ParagraphStyle('BillTo', parent=styles['Normal'], fontSize=9, textColor=colors.black, leading=12)
         
-        bill_to_style = ParagraphStyle(
-            'BillTo',
-            parent=styles['Normal'],
-            fontSize=8,
-            textColor=colors.HexColor('#333333'),
-            leading=11
-        )
+        bill_info = []
+        bill_info.append([Paragraph("<b>BILL TO</b>", bill_to_header_style)])
+        bill_info.append([Paragraph(invoice['customer']['name'], bill_to_name_style)])
+        if invoice['customer'].get('phone'):
+            bill_info.append([Paragraph(f"Phone: {invoice['customer']['phone']}", bill_to_style)])
         
-        bill_to_data = []
-        bill_to_data.append(Paragraph("<b>Bill To</b>", bill_to_header_style))
-        customer_info = f"<b>{invoice['customer']['name']}</b><br/>"
-        if invoice['customer'].get('address'):
-            customer_info += f"{invoice['customer']['address'].replace(chr(10), '<br/>')}"
-        bill_to_data.append(Paragraph(customer_info, bill_to_style))
+        bill_info_table = Table(bill_info, colWidths=[3.5*inch])
+        bill_info_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'TOP'), ('LEFTPADDING', (0,0), (-1,-1), 0), ('BOTTOMPADDING', (0,0), (-1,-1), 0), ('TOPPADDING', (0,0), (-1,-1), 0)]))
         
-        bill_section = Table([[bill_to_data]], colWidths=[6.8*inch])
-        bill_section.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ]))
+        bill_section = Table([[get_user_icon(), bill_info_table]], colWidths=[0.5*inch, 3.5*inch])
+        bill_section.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('LEFTPADDING', (0,0), (-1,-1), 0)]))
+        bill_section.hAlign = 'LEFT'
         elements.append(bill_section)
         elements.append(Spacer(1, 0.2*inch))
         
@@ -1103,29 +1140,30 @@ def download_invoice_pdf(invoice_id):
             ])
         
         # Add empty rows for visual spacing (like the reference)
-        for _ in range(max(0, 10 - len(invoice['items']))):
+        for _ in range(max(0, 4 - len(invoice['items']))):
             items_data.append(['', '', '', '', ''])
         
         items_table = Table(items_data, colWidths=[0.6*inch, 2.8*inch, 1.2*inch, 0.9*inch, 1.3*inch])
         items_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#888888')),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#333333')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('ALIGN', (0, 0), (0, -1), 'CENTER'),
-            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
-            ('ALIGN', (3, 0), (3, -1), 'RIGHT'),
+            ('ALIGN', (2, 0), (2, -1), 'CENTER'),
+            ('ALIGN', (3, 0), (3, -1), 'CENTER'),
+            ('ALIGN', (4, 0), (4, -1), 'RIGHT'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 9),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
             ('TOPPADDING', (0, 0), (-1, 0), 10),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#666666')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fafafa')])
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
         ]))
+        items_table.hAlign = 'LEFT'
         elements.append(items_table)
-        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Spacer(1, 0.15*inch))
         
         # Totals - right aligned matching reference
-        total_label_style = ParagraphStyle('TotalLabel', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', alignment=2)
+        total_label_style = ParagraphStyle('TotalLabel', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', alignment=0)
         total_value_style = ParagraphStyle('TotalValue', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', alignment=2)
         
         # Calculate total discount for display
@@ -1134,13 +1172,11 @@ def download_invoice_pdf(invoice_id):
         totals_data = []
         if total_discount > 0:
             totals_data.append(
-                ['', '', '', Paragraph('<b>Discount</b>', ParagraphStyle('DiscLabel', parent=total_label_style, textColor=colors.HexColor('#dc3545'))), Paragraph(f'<b>- Rs.{total_discount:,.2f}</b>', ParagraphStyle('DiscVal', parent=total_value_style, textColor=colors.HexColor('#dc3545')))]
+                ['', '', '', Paragraph('<b>Discount</b>', ParagraphStyle('DiscLabel', parent=total_label_style, textColor=colors.HexColor('#d32f2f'))), Paragraph(f'<b>- Rs.{total_discount:,.2f}</b>', ParagraphStyle('DiscVal', parent=total_value_style, textColor=colors.HexColor('#d32f2f')))]
             )
+            
         totals_data.append(
             ['', '', '', Paragraph("<b>Total</b>", total_label_style), Paragraph(f"<b>Rs.{invoice['grand_total']:,.2f}</b>", total_value_style)]
-        )
-        totals_data.append(
-            ['', '', '', Paragraph("<b>Balance</b>", total_label_style), Paragraph(f"<b>Rs.{invoice['grand_total']:,.2f}</b>", total_value_style)]
         )
         
         totals_table = Table(totals_data, colWidths=[0.6*inch, 2.8*inch, 1.2*inch, 0.9*inch, 1.3*inch])
@@ -1148,21 +1184,138 @@ def download_invoice_pdf(invoice_id):
             ('ALIGN', (3, 0), (4, -1), 'RIGHT'),
             ('FONTNAME', (3, 0), (4, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('LINEBELOW', (3, -1), (4, -1), 1, colors.black),
+            ('LINEBELOW', (3, -1), (4, -1), 1.5, colors.black),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
         ]))
+        totals_table.hAlign = 'LEFT'
         elements.append(totals_table)
-        elements.append(Spacer(1, 0.4*inch))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        amount_paid = float(invoice.get('amount_paid', 0.0))
+        balance_due = float(invoice.get('balance_due', invoice['grand_total']))
+        
+        # Payments block
+        if amount_paid > 0 and balance_due > 0:
+            payment_header_style = ParagraphStyle('PayHdr', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', textColor=colors.HexColor('#d32f2f'), alignment=1)
+            payment_date_style = ParagraphStyle('PayDate', parent=styles['Normal'], fontSize=9, textColor=colors.black, alignment=1)
+            payment_txt_style = ParagraphStyle('PayTxt', parent=styles['Normal'], fontSize=9, textColor=colors.black, alignment=1)
+            payment_amt_style = ParagraphStyle('PayAmt', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#d32f2f'), alignment=2)
+            payment_thx_style = ParagraphStyle('PayThx', parent=styles['Normal'], fontSize=8, textColor=colors.black, alignment=1)
+            
+            pay_date_str = invoice['invoice_date'].strftime('%d %b %Y') # assuming paid on invoice date if no separate date is stored
+            
+            pay_data = [
+                [Paragraph("<b>PAYMENTS</b>", payment_header_style)],
+                [
+                    Table([[
+                        Paragraph(pay_date_str, payment_date_style),
+                        Paragraph("Payment Received", payment_txt_style),
+                        Paragraph(f"- Rs.{amount_paid:,.2f}", payment_amt_style)
+                    ]], colWidths=[1.2*inch, 2.0*inch, 1.5*inch])
+                ],
+                [Paragraph("( Thank you for your payment )", payment_thx_style)]
+            ]
+            
+            pay_table = Table(pay_data, colWidths=[4.7*inch])
+            pay_table.setStyle(TableStyle([
+                ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#d32f2f')),
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#fdeeee')),
+                ('LINEBELOW', (0,0), (-1,0), 1, colors.HexColor('#d32f2f')),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+                ('TOPPADDING', (0,0), (-1,-1), 8),
+            ]))
+            
+            # Right align the payment table (relative to full width)
+            wrapper_data = [['', pay_table]]
+            wrapper_table = Table(wrapper_data, colWidths=[2.1*inch, 4.7*inch])
+            wrapper_table.hAlign = 'LEFT'
+            elements.append(wrapper_table)
+            elements.append(Spacer(1, 0.1*inch))
+        
+        # Balance Due block
+        if balance_due > 0:
+            bal_label = ParagraphStyle('BalLbl', parent=styles['Normal'], fontSize=14, fontName='Helvetica-Bold', textColor=colors.HexColor('#d32f2f'))
+            bal_val = ParagraphStyle('BalVal', parent=styles['Normal'], fontSize=16, fontName='Helvetica-Bold', textColor=colors.HexColor('#d32f2f'), alignment=2)
+            
+            bal_data = [
+                [Paragraph("<b>BALANCE DUE</b>", bal_label), Paragraph(f"<b>Rs.{balance_due:,.2f}</b>", bal_val)]
+            ]
+            bal_table = Table(bal_data, colWidths=[2.35*inch, 2.35*inch])
+            bal_table.setStyle(TableStyle([
+                ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#d32f2f')),
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#fdeeee')),
+                ('ALIGN', (0,0), (0,0), 'LEFT'),
+                ('ALIGN', (1,0), (1,0), 'RIGHT'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+                ('TOPPADDING', (0,0), (-1,-1), 12),
+            ]))
+            
+            wrapper_data = [['', bal_table]]
+            wrapper_table = Table(wrapper_data, colWidths=[2.1*inch, 4.7*inch])
+            wrapper_table.hAlign = 'LEFT'
+            elements.append(wrapper_table)
+            elements.append(Spacer(1, 0.2*inch))
         
         # Footer - Thank you note
-        footer_style = ParagraphStyle(
-            'Footer',
-            parent=styles['Normal'],
-            fontSize=9,
-            textColor=colors.HexColor('#111111'),
-            alignment=0
-        )
-        elements.append(Paragraph("Thank you for your business.", footer_style))
+        def get_doc_icon():
+            d = Drawing(30, 30)
+            d.add(Circle(15, 15, 14, fillColor=colors.white, strokeColor=colors.HexColor('#d32f2f'), strokeWidth=1.5))
+            d.add(Rect(10, 8, 10, 14, fillColor=None, strokeColor=colors.HexColor('#d32f2f'), strokeWidth=1.2))
+            d.add(Rect(12, 17, 6, 1, fillColor=colors.HexColor('#d32f2f'), strokeColor=None))
+            d.add(Rect(12, 14, 6, 1, fillColor=colors.HexColor('#d32f2f'), strokeColor=None))
+            d.add(Rect(12, 11, 4, 1, fillColor=colors.HexColor('#d32f2f'), strokeColor=None))
+            return d
+
+        def get_phone_icon():
+            d = Drawing(16, 16)
+            d.add(Circle(8, 8, 8, fillColor=colors.HexColor('#d32f2f'), strokeColor=None))
+            p = Path(fillColor=colors.white, strokeColor=None)
+            p.moveTo(5, 11); p.curveTo(4, 11, 4, 9, 5, 8); p.lineTo(8, 5); p.curveTo(9, 4, 11, 4, 11, 5)
+            p.lineTo(12, 6); p.curveTo(12, 7, 10, 8, 9, 7); p.lineTo(7, 9); p.curveTo(8, 10, 7, 12, 6, 12); p.lineTo(5, 11); p.closePath()
+            d.add(p)
+            return d
+
+        def get_marker_icon():
+            d = Drawing(16, 16)
+            d.add(Circle(8, 8, 8, fillColor=colors.HexColor('#d32f2f'), strokeColor=None))
+            p = Path(fillColor=colors.white, strokeColor=None)
+            p.moveTo(8, 3); p.lineTo(5, 8); p.curveTo(5, 11, 11, 11, 11, 8); p.lineTo(8, 3); p.closePath()
+            d.add(p)
+            d.add(Circle(8, 8.5, 1.5, fillColor=colors.HexColor('#d32f2f'), strokeColor=None))
+            return d
+
+        thank_you_style_red = ParagraphStyle('ThxRed', parent=styles['Normal'], fontSize=10, fontName='Helvetica-Bold', textColor=colors.HexColor('#d32f2f'))
+        thank_you_style_blk = ParagraphStyle('ThxBlk', parent=styles['Normal'], fontSize=9, textColor=colors.black)
         
+        elements.append(Spacer(1, 0.3*inch))
+        
+        thx_info = []
+        thx_info.append([Paragraph("<b>Thank you for your business.</b>", thank_you_style_red)])
+        thx_info.append([Paragraph("If you have any questions, please feel free to contact us.", thank_you_style_blk)])
+        thx_table = Table(thx_info)
+        thx_table.setStyle(TableStyle([('LEFTPADDING', (0,0), (-1,-1), 0), ('BOTTOMPADDING', (0,0), (-1,-1), 2), ('TOPPADDING', (0,0), (-1,-1), 2)]))
+        
+        thx_section = Table([[get_doc_icon(), thx_table]], colWidths=[0.5*inch, 4*inch])
+        thx_section.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('LEFTPADDING', (0,0), (-1,-1), 0)]))
+        thx_section.hAlign = 'LEFT'
+        elements.append(thx_section)
+        
+        # Footer table is now drawn in draw_page_border
+        phone_style = ParagraphStyle('PhoneSt', parent=styles['Normal'], fontSize=9, textColor=colors.black)
+        
+        footer_info = [
+            [get_phone_icon(), Paragraph(f"Phone: {BUSINESS_NAME.replace('red studio', '8870650403')}", phone_style)],
+            [get_marker_icon(), Paragraph(f"Address: {BUSINESS_ADDRESS.replace('<br/>', ' ')}", phone_style)]
+        ]
+        footer_table = Table(footer_info, colWidths=[0.3*inch, 6*inch])
+        footer_table.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('LEFTPADDING', (0,0), (-1,-1), 0), ('BOTTOMPADDING', (0,0), (-1,-1), 4), ('TOPPADDING', (0,0), (-1,-1), 4)]))
+        footer_table.hAlign = 'LEFT'
+        # Do not append footer_table to elements, it is drawn in draw_page_border
+        
+        doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=1.4*inch, leftMargin=0.6*inch, rightMargin=0.6*inch)
         doc.build(elements, onFirstPage=draw_page_border, onLaterPages=draw_page_border)
         buffer.seek(0)
         

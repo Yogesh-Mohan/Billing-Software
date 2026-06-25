@@ -574,10 +574,23 @@
                         <div class="totals-label">Tax Amount:</div>
                         <div class="totals-val">₹<span id="display_tax_amount">0.00</span></div>
                     </div>
-                    <div class="totals-row border-0">
+                    <div class="totals-row border-0 pb-1 mb-1" style="border-bottom: 1px solid #dee2e6 !important;">
                         <div class="col-8 text-end fs-5 font-weight-bold">Grand Total:</div>
                         <div class="col-4 px-3">
                             <div class="totals-val fs-5 text-primary">₹<span id="display_grand_total">0.00</span></div>
+                        </div>
+                    </div>
+                    <div class="totals-row border-0 mb-1 pb-1">
+                        <div class="col-8 text-end fs-6 font-weight-bold pt-1">Amount Paid:</div>
+                        <div class="col-4 px-3 d-flex align-items-center justify-content-end">
+                            <span class="me-1">₹</span>
+                            <input type="number" name="amount_paid" id="amount_paid" class="form-control form-control-custom text-end py-1 px-2" style="width: 90px;" value="0.00" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="totals-row border-0">
+                        <div class="col-8 text-end fs-6 font-weight-bold text-muted">Balance Due:</div>
+                        <div class="col-4 px-3">
+                            <div class="totals-val fs-6 text-danger">₹<span id="display_balance_due">0.00</span></div>
                         </div>
                     </div>
                 </div>
@@ -738,6 +751,11 @@ function openInvoicePreview() {
     const taxAmt = taxAmtEl ? taxAmtEl.textContent : '0.00';
     const grandTotal = grandTotalEl ? grandTotalEl.textContent : '0.00';
     
+    const amountPaidInput = document.getElementById('amount_paid');
+    const amountPaid = amountPaidInput ? (parseFloat(amountPaidInput.value) || 0).toFixed(2) : '0.00';
+    const balanceDueEl = document.getElementById('display_balance_due');
+    const balanceDue = balanceDueEl ? balanceDueEl.textContent : grandTotal;
+    
     // Build the preview HTML
     let logoHTML = '';
     if (LOGO_PATH) {
@@ -782,7 +800,8 @@ function openInvoicePreview() {
         + '  <table>'
         + (previewTotalDiscount > 0 ? '    <tr><td class="label-cell" style="color:#dc3545;">Discount</td><td class="value-cell" style="color:#dc3545;">- ' + formatCurrency(previewTotalDiscount) + '</td></tr>' : '')
         + '    <tr><td class="label-cell">Total</td><td class="value-cell">₹' + grandTotal + '</td></tr>'
-        + '    <tr><td class="label-cell">Balance</td><td class="value-cell">₹' + grandTotal + '</td></tr>'
+        + '    <tr><td class="label-cell">Amount Paid</td><td class="value-cell">₹' + amountPaid + '</td></tr>'
+        + '    <tr><td class="label-cell">Balance Due</td><td class="value-cell" style="color:#dc3545;">₹' + balanceDue + '</td></tr>'
         + '  </table>'
         + '</div>'
         // Footer

@@ -159,6 +159,18 @@
                             <td class="text-dark font-weight-bold fs-5 px-0">Grand Total:</td>
                             <td class="text-end text-success font-weight-bold fs-5 px-0">₹{{ "{:,.2f}".format(invoice.grand_total) }}</td>
                         </tr>
+                        {% if invoice.amount_paid and invoice.amount_paid > 0 %}
+                        <tr>
+                            <td class="text-dark font-weight-bold fs-6 px-0">Amount Paid:</td>
+                            <td class="text-end text-primary font-weight-bold fs-6 px-0">₹{{ "{:,.2f}".format(invoice.amount_paid) }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if invoice.balance_due and invoice.balance_due > 0 %}
+                        <tr>
+                            <td class="text-dark font-weight-bold fs-5 px-0">Balance Due:</td>
+                            <td class="text-end text-danger font-weight-bold fs-5 px-0">₹{{ "{:,.2f}".format(invoice.balance_due) }}</td>
+                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>

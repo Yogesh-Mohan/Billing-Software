@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', function () {
         taxRateInput.addEventListener('input', calculateInvoiceTotals);
     }
 
+    const amountPaidInput = document.getElementById('amount_paid');
+    if (amountPaidInput) {
+        amountPaidInput.addEventListener('input', calculateInvoiceTotals);
+    }
+
     // Default Row Initialization
     if (itemsTableBody && itemsTableBody.rows.length === 0) {
         addNewRow();
@@ -173,9 +178,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const taxAmount = subtotalSum * (taxRate / 100);
         const grandTotal = subtotalSum + taxAmount;
 
+        const amountPaidInput = document.getElementById('amount_paid');
+        const amountPaid = amountPaidInput ? (parseFloat(amountPaidInput.value) || 0) : 0;
+        const balanceDue = Math.max(0, grandTotal - amountPaid);
+
         document.getElementById('display_subtotal').innerText = subtotalSum.toFixed(2);
         document.getElementById('display_discount_total').innerText = totalDiscount.toFixed(2);
         document.getElementById('display_tax_amount').innerText = taxAmount.toFixed(2);
         document.getElementById('display_grand_total').innerText = grandTotal.toFixed(2);
+        
+        const balanceDueEl = document.getElementById('display_balance_due');
+        if (balanceDueEl) {
+            balanceDueEl.innerText = balanceDue.toFixed(2);
+        }
     }
 });
