@@ -659,6 +659,246 @@ def invoice_view(invoice_id):
         return redirect(url_for('invoices'))
     return render_template('invoice_view.html', invoice=invoice)
 
+@app.route('/invoices/delete/<invoice_id>', methods=['POST'])
+@login_required
+def delete_invoice(invoice_id):
+    try:
+        invoice = db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        if not invoice:
+            flash('Invoice not found.', 'danger')
+            return redirect(url_for('invoices'))
+        
+        # Restore stock quantities
+        for item in invoice.get('items', []):
+            if 'product_id' in item and item['product_id']:
+                try:
+                    db.items.update_one(
+                        {"_id": item['product_id'], "manage_stock": True},
+                        {"$inc": {"current_qty": item.get('quantity', 0)}}
+                    )
+                except Exception:
+                    pass
+        
+        # Delete invoice
+        db.invoices.delete_one({"_id": ObjectId(invoice_id)})
+        flash('Invoice deleted successfully.', 'success')
+    except Exception as e:
+        flash('Error deleting invoice.', 'danger')
+    return redirect(url_for('invoices'))
+
+@app.route('/invoice/edit/<invoice_id>', methods=['GET', 'POST'])
+@login_required
+def edit_invoice(invoice_id):
+    try:
+        invoice = db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    except Exception:
+        invoice = None
+        
+    if not invoice:
+        flash('Invoice not found.', 'danger')
+        return redirect(url_for('invoices'))
+        
+    if request.method == 'POST':
+        customer_name = request.form.get('customer_name', '').strip()
+        billing_address = request.form.get('billing_address', '').strip()
+        invoice_date_str = request.form.get('invoice_date')
+        tax_rate = float(request.form.get('tax_rate', 0))
+        
+        payment_terms = request.form.get('payment_terms', 'Pay in Days')
+        payment_days = request.form.get('payment_days', '30')
+        po_number = request.form.get('po_number', '').strip()
+        salesperson = request.form.get('salesperson', '').strip()
+        shipping_address = request.form.get('shipping_address', '').strip()
+        public_note = request.form.get('public_note', '').strip()
+        private_note = request.form.get('private_note', '').strip()
+        foot_note = request.form.get('foot_note', '').strip()
+        
+        product_ids = request.form.getlist('item_product_id[]')
+        item_codes = request.form.getlist('item_code[]')
+        descriptions = request.form.getlist('item_description[]')
+        quantities = request.form.getlist('item_quantity[]')
+        prices = request.form.getlist('item_price[]')
+        discounts = request.form.getlist('item_discount[]')
+        
+        if not customer_name or not product_ids:
+            flash('Customer Name and at least one Product are required.', 'danger')
+            return redirect(url_for('edit_invoice', invoice_id=invoice_id))
+            
+        # Get or Create Customer
+        customer = db.customers.find_one({"name": {"$regex": f"^{re.escape(customer_name)}$", "$options": "i"}})
+        if not customer:
+            customer_doc = {
+                "name": customer_name,
+                "address": billing_address,
+                "phone": "",
+                "email": "",
+                "created_at": datetime.utcnow()
+            }
+            res = db.customers.insert_one(customer_doc)
+            customer = db.customers.find_one({"_id": res.inserted_id})
+        else:
+            if billing_address:
+                db.customers.update_one({"_id": customer["_id"]}, {"$set": {"address": billing_address}})
+                customer["address"] = billing_address
+        
+        items = []
+        subtotal = 0.0
+        
+        for i, pid in enumerate(product_ids):
+            if not pid:
+                continue
+            try:
+                qty = int(quantities[i])
+                price = float(prices[i])
+            except (ValueError, IndexError):
+                flash('Invalid quantity or price provided.', 'danger')
+                return redirect(url_for('edit_invoice', invoice_id=invoice_id))
+            
+            code = item_codes[i] if i < len(item_codes) else ''
+            desc = descriptions[i] if i < len(descriptions) else ''
+            
+            db_item = db.items.find_one({"_id": ObjectId(pid)})
+            if not db_item:
+                flash('One or more selected items does not exist.', 'danger')
+                return redirect(url_for('edit_invoice', invoice_id=invoice_id))
+                
+            item_subtotal = qty * price
+            discount_pct = float(discounts[i]) if i < len(discounts) else 0.0
+            discount_amount = item_subtotal * (discount_pct / 100.0)
+            item_after_discount = item_subtotal - discount_amount
+            subtotal += item_after_discount
+            
+            items.append({
+                "product_id": ObjectId(pid),
+                "product_name": db_item.get('item_name', ''),
+                "product_code": code,
+                "description": desc,
+                "quantity": qty,
+                "price": price,
+                "discount_pct": discount_pct,
+                "discount_amount": discount_amount,
+                "subtotal": item_after_discount
+            })
+                
+        # Calculate Stock differences
+        # 1. Add back old items quantities
+        for old_item in invoice.get('items', []):
+            if 'product_id' in old_item and old_item['product_id']:
+                try:
+                    db.items.update_one(
+                        {"_id": old_item['product_id'], "manage_stock": True},
+                        {"$inc": {"current_qty": old_item.get('quantity', 0)}}
+                    )
+                except Exception:
+                    pass
+        # 2. Deduct new items quantities
+        for new_item in items:
+            if 'product_id' in new_item and new_item['product_id']:
+                try:
+                    db.items.update_one(
+                        {"_id": new_item['product_id'], "manage_stock": True},
+                        {"$inc": {"current_qty": -new_item.get('quantity', 0)}}
+                    )
+                except Exception:
+                    pass
+                
+        tax_amount = subtotal * (tax_rate / 100.0)
+        grand_total = subtotal + tax_amount
+        amount_paid_str = request.form.get('amount_paid', '0').strip()
+        amount_paid = float(amount_paid_str) if amount_paid_str else 0.0
+        balance_due = max(0.0, grand_total - amount_paid)
+        
+        invoice_date = datetime.strptime(invoice_date_str, '%Y-%m-%d') if invoice_date_str else datetime.utcnow()
+        try:
+            payment_days_int = int(payment_days) if payment_days else 30
+        except ValueError:
+            payment_days_int = 30
+        due_date = invoice_date + timedelta(days=payment_days_int)
+        
+        update_doc = {
+            "invoice_date": invoice_date,
+            "due_date": due_date,
+            "payment_terms": payment_terms,
+            "payment_days": payment_days,
+            "po_number": po_number,
+            "salesperson": salesperson,
+            "shipping_address": shipping_address,
+            "public_note": public_note,
+            "private_note": private_note,
+            "foot_note": foot_note,
+            "customer": {
+                "customer_id": customer['_id'],
+                "name": customer['name'],
+                "phone": customer.get('phone', ''),
+                "email": customer.get('email', ''),
+                "address": customer.get('address', '')
+            },
+            "items": items,
+            "subtotal": subtotal,
+            "tax_rate": tax_rate,
+            "tax_amount": tax_amount,
+            "grand_total": grand_total,
+            "amount_paid": amount_paid,
+            "balance_due": balance_due,
+            "updated_at": datetime.utcnow()
+        }
+        
+        db.invoices.update_one({"_id": ObjectId(invoice_id)}, {"$set": update_doc})
+        flash(f'Invoice {invoice.get("invoice_number", "")} updated successfully!', 'success')
+        return redirect(url_for('download_invoice_pdf', invoice_id=invoice_id))
+        
+    # GET Method - render create invoice with prefilled data
+    customers_list = list(db.customers.find().sort("name", 1))
+    items_list = list(db.items.find().sort("item_code", 1))
+    
+    items_json = json.dumps([
+        {
+            "id": str(item['_id']),
+            "name": item.get('item_name', ''),
+            "code": item.get('item_code', ''),
+            "description": item.get('description', ''),
+            "price": item.get('price', 0),
+            "stock": item.get('current_qty', 0) if item.get('manage_stock') else -1
+        }
+        for item in items_list
+    ])
+    
+    customers_json = json.dumps({
+        cust['name']: {
+            "address": cust.get('address', '').replace('\n', ' '),
+            "phone": cust.get('phone', ''),
+            "email": cust.get('email', '')
+        }
+        for cust in customers_list
+    })
+    
+    def serialize_invoice(inv):
+        inv_copy = dict(inv)
+        inv_copy['_id'] = str(inv_copy['_id'])
+        if 'customer' in inv_copy and 'customer_id' in inv_copy['customer']:
+            inv_copy['customer']['customer_id'] = str(inv_copy['customer']['customer_id'])
+        if 'invoice_date' in inv_copy:
+            inv_copy['invoice_date'] = inv_copy['invoice_date'].strftime('%Y-%m-%d')
+        if 'due_date' in inv_copy:
+            inv_copy['due_date'] = inv_copy['due_date'].strftime('%Y-%m-%d')
+        if 'created_at' in inv_copy:
+            inv_copy['created_at'] = inv_copy['created_at'].strftime('%Y-%m-%dT%H:%M:%S')
+        if 'updated_at' in inv_copy:
+            inv_copy['updated_at'] = inv_copy['updated_at'].strftime('%Y-%m-%dT%H:%M:%S')
+        for item in inv_copy.get('items', []):
+            if 'product_id' in item:
+                item['product_id'] = str(item['product_id'])
+        return json.dumps(inv_copy)
+        
+    edit_invoice_json = serialize_invoice(invoice)
+    today_str = invoice.get('invoice_date', datetime.utcnow()).strftime('%Y-%m-%d')
+    suggested_invoice_num = invoice.get('invoice_number', '')
+    
+    return render_template('invoice_create.html', customers=customers_list, items=items_list, 
+                           items_json=items_json, customers_json=customers_json, 
+                           today=today_str, suggested_invoice_num=suggested_invoice_num,
+                           edit_invoice_json=edit_invoice_json, edit_mode=True, invoice_id=invoice_id)
+
 # ==========================================
 # REPORTS ROUTE & EXPORTS
 # ==========================================

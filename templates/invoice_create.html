@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Create Invoice{% endblock %}
+{% block title %}{% if edit_mode %}Edit Invoice{% else %}Create Invoice{% endif %}{% endblock %}
 
 {% block head %}
 <style>
@@ -364,14 +364,15 @@
 {% endblock %}
 
 {% block content %}
-<div class="top-navbar no-print">
+<div class="top-navbar">
     <div>
-        <h2 class="page-title">Brisk Invoice Creator</h2>
-        <p class="text-muted m-0">Dynamic billing builder modeled after Brisk Invoicing.</p>
+        <h2 class="page-title">{% if edit_mode %}Edit Invoice {{ suggested_invoice_num }}{% else %}Create a New Invoice{% endif %}</h2>
+        <p class="text-muted m-0">Fill in the details below to generate a professional invoice.</p>
     </div>
 </div>
 
 <div class="invoice-builder-container shadow-sm mb-5">
+    <form method="POST" action="{% if edit_mode %}{{ url_for('edit_invoice', invoice_id=invoice_id) }}{% else %}{{ url_for('create_invoice') }}{% endif %}" id="invoiceForm">
     <!-- Top explore alert -->
     <div class="explore-alert mb-4 d-flex justify-content-between align-items-start no-print">
         <div>
@@ -660,6 +661,77 @@
     });
 </script>
 <script src="{{ url_for('static', filename='js/invoice.js') }}"></script>
+
+{% if edit_mode %}
+<script id="edit-invoice-data" type="application/json">{{ edit_invoice_json|safe }}</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const editDataStr = document.getElementById('edit-invoice-data').textContent;
+        if (editDataStr) {
+            const editData = JSON.parse(editDataStr);
+            
+            // Populate form fields safely
+            const setVal = (selector, val) => {
+                const el = document.querySelector(selector);
+                if (el && val !== undefined && val !== null) el.value = val;
+            };
+            
+            setVal('input[name="customer_name"]', editData.customer.name);
+            setVal('textarea[name="billing_address"]', editData.customer.address);
+            setVal('input[name="invoice_date"]', editData.invoice_date);
+            setVal('input[name="invoice_number"]', editData.invoice_number);
+            
+            const invNum = document.querySelector('input[name="invoice_number"]');
+            if (invNum) invNum.readOnly = true;
+            
+            setVal('input[name="tax_rate"]', editData.tax_rate);
+            
+            setVal('select[name="payment_terms"]', editData.payment_terms || '');
+            setVal('input[name="payment_days"]', editData.payment_days || '');
+            setVal('input[name="po_number"]', editData.po_number || '');
+            setVal('input[name="salesperson"]', editData.salesperson || '');
+            setVal('textarea[name="shipping_address"]', editData.shipping_address || '');
+            setVal('textarea[name="public_note"]', editData.public_note || '');
+            setVal('textarea[name="private_note"]', editData.private_note || '');
+            setVal('textarea[name="foot_note"]', editData.foot_note || '');
+            setVal('input[name="amount_paid"]', editData.amount_paid);
+            
+            // Wait slightly for invoice.js to initialize default row, then clear it
+            setTimeout(() => {
+                const tbody = document.getElementById('invoice-items-body');
+                tbody.innerHTML = '';
+                
+                // Re-populate items
+                editData.items.forEach(item => {
+                    document.getElementById('add-item-row').click(); 
+                    const row = tbody.lastElementChild;
+                    
+                    row.querySelector('.code-input').value = item.product_code || item.product_name;
+                    row.querySelector('.item-id-hidden').value = item.product_id;
+                    
+                    const qtyInput = row.querySelector('.quantity-input');
+                    qtyInput.value = item.quantity;
+                    qtyInput.disabled = false;
+                    
+                    const descInput = row.querySelector('.description-input');
+                    descInput.value = item.description;
+                    descInput.removeAttribute('readonly');
+                    
+                    const priceInput = row.querySelector('.price-input');
+                    priceInput.value = item.price;
+                    priceInput.removeAttribute('readonly');
+                    
+                    row.querySelector('.discount-input').value = item.discount_pct || 0;
+                    row.querySelector('.subtotal-input').value = item.subtotal;
+                });
+                
+                // Trigger calculation
+                document.querySelector('input[name="tax_rate"]').dispatchEvent(new Event('input'));
+            }, 100);
+        }
+    });
+</script>
+{% endif %}
 
 <script>
 // ===== Invoice Preview Modal Logic =====
