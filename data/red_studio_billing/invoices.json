@@ -2,8 +2,8 @@
   {
     "_id": "6a226f62304a24ebc0952759",
     "invoice_number": "10000",
-    "invoice_date": "2026-06-05T00:00:00Z",
-    "due_date": "2026-07-05T00:00:00Z",
+    "invoice_date": "__datetime__:2026-06-05T00:00:00",
+    "due_date": "__datetime__:2026-07-05T00:00:00",
     "payment_terms": "Due on Receipt",
     "payment_days": "30",
     "po_number": "123",
@@ -38,13 +38,13 @@
     "tax_rate": 18.0,
     "tax_amount": 8.1,
     "grand_total": 53.1,
-    "created_at": "2026-06-05T06:40:34.330Z"
+    "created_at": "__datetime__:2026-06-05T06:40:34"
   },
   {
     "_id": "6a228073e879b98dc8efefb1",
     "invoice_number": "10001",
-    "invoice_date": "2026-06-05T00:00:00Z",
-    "due_date": "2026-07-05T00:00:00Z",
+    "invoice_date": "__datetime__:2026-06-05T00:00:00",
+    "due_date": "__datetime__:2026-07-05T00:00:00",
     "payment_terms": "Pay in Days",
     "payment_days": "30",
     "po_number": "",
@@ -79,13 +79,13 @@
     "tax_rate": 18.0,
     "tax_amount": 396.0,
     "grand_total": 2596.0,
-    "created_at": "2026-06-05T07:53:23.289Z"
+    "created_at": "__datetime__:2026-06-05T07:53:23"
   },
   {
     "_id": "6a22df6e8f763bd4974f2aeb",
     "invoice_number": "10002",
-    "invoice_date": "2026-06-05T00:00:00Z",
-    "due_date": "2026-07-05T00:00:00Z",
+    "invoice_date": "__datetime__:2026-06-05T00:00:00",
+    "due_date": "__datetime__:2026-07-05T00:00:00",
     "payment_terms": "Pay in Days",
     "payment_days": "30",
     "po_number": "",
@@ -120,13 +120,13 @@
     "tax_rate": 18.0,
     "tax_amount": 396.0,
     "grand_total": 2596.0,
-    "created_at": "2026-06-05T14:38:38.110Z"
+    "created_at": "__datetime__:2026-06-05T14:38:38"
   },
   {
     "_id": "6a22f7a1f2c9852981b14a68",
     "invoice_number": "10003",
-    "invoice_date": "2026-06-05T00:00:00Z",
-    "due_date": "2026-06-20T00:00:00Z",
+    "invoice_date": "__datetime__:2026-06-05T00:00:00",
+    "due_date": "__datetime__:2026-06-20T00:00:00",
     "payment_terms": "Pay in Days",
     "payment_days": "15",
     "po_number": "",
@@ -161,58 +161,375 @@
     "tax_rate": 18.0,
     "tax_amount": 8.1,
     "grand_total": 53.1,
-    "created_at": "2026-06-05T16:21:53.397Z"
+    "created_at": "__datetime__:2026-06-05T16:21:53"
   },
   {
-    "_id": "6a22fc0ef2c9852981b14a6a",
-    "invoice_number": "10004",
-    "invoice_date": "2026-06-05T00:00:00Z",
-    "due_date": "2027-10-18T00:00:00Z",
-    "payment_terms": "Pay in Days",
-    "payment_days": "500",
+    "invoice_number": "10005",
+    "invoice_date": "__datetime__:2026-06-24T00:00:00",
+    "due_date": "__datetime__:2026-07-24T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
     "po_number": "",
     "salesperson": "",
-    "shipping_address": "8, Vakkil Nagalingam St\r\nGobilthankavelu",
+    "shipping_address": "jeeva stret",
     "public_note": "",
     "private_note": "",
     "foot_note": "",
     "customer": {
-      "customer_id": {
-        "$oid": "6a22fc0ef2c9852981b14a69"
-      },
+      "customer_id": "6a22fc0ef2c9852981b14a69",
       "name": "sriram",
+      "phone": "",
+      "email": "",
+      "address": "mani strret123 Main St, Ramanathapuram"
+    },
+    "items": [
+      {
+        "product_id": "6a22e310f699b195d87df43b",
+        "product_name": "12*18",
+        "product_code": "12*18",
+        "description": "format",
+        "quantity": 1,
+        "price": 200.0,
+        "discount_pct": 0.0,
+        "discount_amount": 0.0,
+        "subtotal": 200.0
+      }
+    ],
+    "subtotal": 200.0,
+    "tax_rate": 18.0,
+    "tax_amount": 36.0,
+    "grand_total": 236.0,
+    "amount_paid": 100.0,
+    "balance_due": 136.0,
+    "created_at": "__datetime__:2026-06-24T17:16:42.556032",
+    "_id": "a854d63c3399469cb978c696"
+  },
+  {
+    "invoice_number": "10006",
+    "invoice_date": "__datetime__:2026-06-24T00:00:00",
+    "due_date": "__datetime__:2026-07-24T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "7/36, VANAKARAN PUDHUR THATHAIYAKARPATTI, WEST THOTTAM Namakkal Tamil Nadu India, 637018",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a22fc0ef2c9852981b14a69",
+      "name": "sriram",
+      "phone": "",
+      "email": "",
+      "address": "mani strret123 Main St, Ramanathapuram"
+    },
+    "items": [
+      {
+        "product_id": "6a22fc30f2c9852981b14a6b",
+        "product_name": "12*15",
+        "product_code": "12*15",
+        "description": "frames",
+        "quantity": 1,
+        "price": 500.0,
+        "discount_pct": 0.0,
+        "discount_amount": 0.0,
+        "subtotal": 500.0
+      }
+    ],
+    "subtotal": 500.0,
+    "tax_rate": 18.0,
+    "tax_amount": 90.0,
+    "grand_total": 590.0,
+    "amount_paid": 500.0,
+    "balance_due": 90.0,
+    "created_at": "__datetime__:2026-06-24T17:21:39.446471",
+    "_id": "0c8c79f0926a4b258d0447ff"
+  },
+  {
+    "invoice_number": "10012",
+    "invoice_date": "__datetime__:2026-06-25T00:00:00",
+    "due_date": "__datetime__:2026-07-25T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a23e660efc99349da7f43de",
+      "name": "Test Customer",
+      "phone": "1234567890",
+      "email": "",
+      "address": "Phone: 1234567890\r\n  Phone: 1234567890\r\n Phone: 1234567890\r\nPhone: 1234567890"
+    },
+    "items": [
+      {
+        "product_id": "6a22fc30f2c9852981b14a6b",
+        "product_name": "12*15",
+        "product_code": "12*15",
+        "description": "frames",
+        "quantity": 1,
+        "price": 500.0,
+        "discount_pct": 0.0,
+        "discount_amount": 0.0,
+        "subtotal": 500.0
+      }
+    ],
+    "subtotal": 500.0,
+    "tax_rate": 0.0,
+    "tax_amount": 0.0,
+    "grand_total": 500.0,
+    "amount_paid": 500.0,
+    "balance_due": 0.0,
+    "created_at": "__datetime__:2026-06-25T09:41:01.713496",
+    "_id": "4b4d765a7757488683286fab"
+  },
+  {
+    "invoice_number": "10013",
+    "invoice_date": "__datetime__:2026-06-25T00:00:00",
+    "due_date": "__datetime__:2026-07-25T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a23e660efc99349da7f43de",
+      "name": "Test Customer",
+      "phone": "1234567890",
+      "email": "",
+      "address": "Phone: 1234567890\r\n   Phone: 1234567890\r\n  Phone: 1234567890\r\n Phone: 1234567890\r\nPhone: 1234567890"
+    },
+    "items": [
+      {
+        "product_id": "6a226b4b03ed29cb9cb8722f",
+        "product_name": "112",
+        "product_code": "112",
+        "description": "112",
+        "quantity": 1,
+        "price": 45.0,
+        "discount_pct": 0.0,
+        "discount_amount": 0.0,
+        "subtotal": 45.0
+      }
+    ],
+    "subtotal": 45.0,
+    "tax_rate": 0.0,
+    "tax_amount": 0.0,
+    "grand_total": 45.0,
+    "amount_paid": 45.0,
+    "balance_due": 0.0,
+    "created_at": "__datetime__:2026-06-25T09:43:18.799031",
+    "_id": "e61b78fd6d71491e9618d958"
+  },
+  {
+    "invoice_number": "10014",
+    "invoice_date": "__datetime__:2026-06-25T00:00:00",
+    "due_date": "__datetime__:2026-07-25T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a22f7a1f2c9852981b14a67",
+      "name": "Yogesh Wara kannan",
       "phone": "",
       "email": "",
       "address": "mani strret"
     },
     "items": [
       {
-        "product_id": {
-          "$oid": "6a226b4b03ed29cb9cb8722f"
-        },
+        "product_id": "6a226b4b03ed29cb9cb8722f",
         "product_name": "112",
         "product_code": "112",
         "description": "112",
         "quantity": 1,
         "price": 45.0,
+        "discount_pct": 0.0,
+        "discount_amount": 0.0,
         "subtotal": 45.0
-      },
-      {
-        "product_id": {
-          "$oid": "6a22e310f699b195d87df43b"
-        },
-        "product_name": "12*18",
-        "product_code": "12*18",
-        "description": "format",
-        "quantity": 1,
-        "price": 200.0,
-        "subtotal": 200.0
       }
     ],
-    "subtotal": 245.0,
+    "subtotal": 45.0,
+    "tax_rate": 0.0,
+    "tax_amount": 0.0,
+    "grand_total": 45.0,
+    "amount_paid": 45.0,
+    "balance_due": 0.0,
+    "created_at": "__datetime__:2026-06-25T09:58:47.857217",
+    "_id": "a307f4af387a44a4ab8df236"
+  },
+  {
+    "invoice_number": "10015",
+    "invoice_date": "__datetime__:2026-06-25T00:00:00",
+    "due_date": "__datetime__:2026-07-25T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a23e660efc99349da7f43de",
+      "name": "Test Customer",
+      "phone": "1234567890",
+      "email": "",
+      "address": "Phone: 1234567890\r\n    Phone: 1234567890\r\n   Phone: 1234567890\r\n  Phone: 1234567890\r\n Phone: 1234567890\r\nPhone: 1234567890"
+    },
+    "items": [
+      {
+        "product_id": "6a226b4b03ed29cb9cb8722f",
+        "product_name": "112",
+        "product_code": "112",
+        "description": "112",
+        "quantity": 1,
+        "price": 45.0,
+        "discount_pct": 0.0,
+        "discount_amount": 0.0,
+        "subtotal": 45.0
+      }
+    ],
+    "subtotal": 45.0,
     "tax_rate": 18.0,
-    "tax_amount": 44.1,
-    "grand_total": 289.1,
-    "created_at": "2026-06-05T16:40:46.402Z"
+    "tax_amount": 8.1,
+    "grand_total": 53.1,
+    "amount_paid": 53.1,
+    "balance_due": 0.0,
+    "created_at": "__datetime__:2026-06-25T10:04:23.874632",
+    "_id": "a5dc70e4b9bd4849a758b478"
+  },
+  {
+    "invoice_number": "10017",
+    "invoice_date": "__datetime__:2026-06-25T00:00:00",
+    "due_date": "__datetime__:2026-07-25T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a23e660efc99349da7f43de",
+      "name": "Test Customer",
+      "phone": "1234567890",
+      "email": "",
+      "address": "Phone: 1234567890\r\n     Phone: 1234567890\r\n    Phone: 1234567890\r\n   Phone: 1234567890\r\n  Phone: 1234567890\r\n Phone: 1234567890\r\nPhone: 1234567890"
+    },
+    "items": [
+      {
+        "product_id": "6a22fc30f2c9852981b14a6b",
+        "product_name": "12*15",
+        "product_code": "12*15",
+        "description": "frames",
+        "quantity": 1,
+        "price": 500.0,
+        "discount_pct": 0.0,
+        "discount_amount": 0.0,
+        "subtotal": 500.0
+      }
+    ],
+    "subtotal": 500.0,
+    "tax_rate": 18.0,
+    "tax_amount": 90.0,
+    "grand_total": 590.0,
+    "amount_paid": 100.0,
+    "balance_due": 490.0,
+    "created_at": "__datetime__:2026-06-25T10:10:20.043315",
+    "_id": "ba8f38aee4154258af4025e5"
+  },
+  {
+    "invoice_number": "10018",
+    "invoice_date": "__datetime__:2026-06-25T00:00:00",
+    "due_date": "__datetime__:2026-07-25T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a23e660efc99349da7f43de",
+      "name": "Test Customer",
+      "phone": "1234567890",
+      "email": "",
+      "address": "Phone: 1234567890\r\n     Phone: 1234567890\r\n    Phone: 1234567890\r\n   Phone: 1234567890\r\n  Phone: 1234567890\r\n Phone: 1234567890\r\nPhone: 1234567890"
+    },
+    "items": [
+      {
+        "product_id": "6a22fc30f2c9852981b14a6b",
+        "product_name": "12*15",
+        "product_code": "12*15",
+        "description": "frames",
+        "quantity": 1,
+        "price": 500.0,
+        "discount_pct": 10.0,
+        "discount_amount": 50.0,
+        "subtotal": 450.0
+      }
+    ],
+    "subtotal": 450.0,
+    "tax_rate": 18.0,
+    "tax_amount": 81.0,
+    "grand_total": 531.0,
+    "amount_paid": 100.0,
+    "balance_due": 431.0,
+    "created_at": "__datetime__:2026-06-25T10:12:18.023706",
+    "_id": "3c72fed224b24640b56e476c"
+  },
+  {
+    "invoice_number": "10019",
+    "invoice_date": "__datetime__:2026-06-25T00:00:00",
+    "due_date": "__datetime__:2026-07-25T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a23e660efc99349da7f43de",
+      "name": "Test Customer",
+      "phone": "1234567890",
+      "email": "",
+      "address": "Phone: 1234567890\r\n      Phone: 1234567890\r\n     Phone: 1234567890\r\n    Phone: 1234567890\r\n   Phone: 1234567890\r\n  Phone: 1234567890\r\n Phone: 1234567890\r\nPhone: 1234567890"
+    },
+    "items": [
+      {
+        "product_id": "6a226b4b03ed29cb9cb8722f",
+        "product_name": "112",
+        "product_code": "112",
+        "description": "112",
+        "quantity": 1,
+        "price": 45.0,
+        "discount_pct": 10.0,
+        "discount_amount": 4.5,
+        "subtotal": 40.5
+      }
+    ],
+    "subtotal": 40.5,
+    "tax_rate": 18.0,
+    "tax_amount": 7.29,
+    "grand_total": 47.79,
+    "amount_paid": 10.0,
+    "balance_due": 37.79,
+    "created_at": "__datetime__:2026-06-25T10:16:20.565320",
+    "_id": "5d15ddef03f5472bac7fb1ff"
   }
 ]

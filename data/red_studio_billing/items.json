@@ -13,7 +13,7 @@
     "warning_qty": 0,
     "supplier": "Local Vendor",
     "note": "",
-    "created_at": "2026-06-05T06:23:07.535Z"
+    "created_at": "__datetime__:2026-06-05T06:23:07"
   },
   {
     "_id": "6a22e310f699b195d87df43b",
@@ -29,7 +29,7 @@
     "warning_qty": 0,
     "supplier": "",
     "note": "",
-    "created_at": "2026-06-05T14:54:08.194Z"
+    "created_at": "__datetime__:2026-06-05T14:54:08"
   },
   {
     "_id": "6a22fc30f2c9852981b14a6b",
@@ -45,6 +45,6 @@
     "warning_qty": 0,
     "supplier": "",
     "note": "",
-    "created_at": "2026-06-05T16:41:20.216Z"
+    "created_at": "__datetime__:2026-06-05T16:41:20"
   }
 ]

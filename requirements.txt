@@ -9,5 +9,6 @@ firebase-admin==6.5.0
 # PDF generation - required for invoice download feature
 # Install manually if missing: pip install reportlab==4.0.9
 reportlab==4.0.9
+openpyxl==3.1.5
 gunicorn==21.2.0
 

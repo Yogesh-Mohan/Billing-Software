@@ -11,3 +11,4 @@ data/
 instance/
 .web/
 *.log
+ledger_*.json

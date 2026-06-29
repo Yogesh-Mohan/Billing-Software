@@ -11,6 +11,7 @@ from file_db import FileClient, FileObjectId
 ObjectId = FileObjectId
 import bcrypt
 from config import Config
+from ledger_utils import read_ledger, add_ledger_entry, update_ledger_entry, delete_ledger_entry, MONTH_NAMES
 
 # Install reportlab for PDF generation
 try:
@@ -94,7 +95,7 @@ def inject_settings():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'logged_in' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('hub'))
         
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -113,7 +114,7 @@ def login():
                 session['logged_in'] = True
                 session['username'] = username
                 flash('Welcome back to RED STUDIO!', 'success')
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('hub'))
             else:
                 flash('Invalid username or password.', 'danger')
         else:
@@ -128,9 +129,133 @@ def logout():
     return redirect(url_for('login'))
 
 # ==========================================
-# DASHBOARD ROUTE
+# HUB & APPS
 # ==========================================
 @app.route('/')
+@login_required
+def hub():
+    return render_template('hub.html')
+
+@app.route('/ledger')
+@login_required
+def ledger():
+    entries, monthly_summary = read_ledger('2026')
+    filter_month = request.args.get('month', 'all')
+    
+    if filter_month != 'all':
+        entries = [e for e in entries if e['month'].lower() == filter_month.lower()]
+    
+    # Calculate totals
+    totals = {
+        'revenue': sum(e['revenue'] for e in entries),
+        'expenditures': sum(e['expenditures'] for e in entries),
+        'investment': sum(e['investment'] for e in entries),
+        'salary': sum(e['salary'] for e in entries),
+    }
+    totals['balance'] = totals['revenue'] - totals['expenditures'] - totals['investment'] - totals['salary']
+    
+    return render_template('ledger.html', 
+        entries=entries, 
+        monthly_summary=monthly_summary,
+        totals=totals, 
+        filter_month=filter_month,
+        months=MONTH_NAMES
+    )
+
+@app.route('/ledger/add', methods=['POST'])
+@login_required
+def ledger_add():
+    month_num = int(request.form.get('month', 1))
+    date_str = request.form.get('date', '')
+    name = request.form.get('name', '').strip()
+    entry_type = request.form.get('type', '').strip()
+    revenue = request.form.get('revenue', '')
+    expenditures = request.form.get('expenditures', '')
+    investment = request.form.get('investment', '')
+    salary = request.form.get('salary', '')
+    payment_method = request.form.get('payment_method', '').strip()
+    
+    if not name:
+        flash('Name is required.', 'danger')
+        return redirect(url_for('ledger'))
+    
+    success, msg = add_ledger_entry(
+        month_num, date_str, name, entry_type,
+        revenue, expenditures, investment, salary, payment_method
+    )
+    
+    if success:
+        flash('Entry added to ledger successfully!', 'success')
+    else:
+        flash(f'Error: {msg}', 'danger')
+    
+    return redirect(url_for('ledger'))
+
+@app.route('/ledger/edit', methods=['POST'])
+@login_required
+def ledger_edit():
+    row_num = int(request.form.get('row', 0))
+    date_str = request.form.get('date', '')
+    name = request.form.get('name', '').strip()
+    entry_type = request.form.get('type', '').strip()
+    revenue = request.form.get('revenue', '')
+    expenditures = request.form.get('expenditures', '')
+    investment = request.form.get('investment', '')
+    salary = request.form.get('salary', '')
+    payment_method = request.form.get('payment_method', '').strip()
+    
+    if row_num <= 0:
+        flash('Invalid entry.', 'danger')
+        return redirect(url_for('ledger'))
+    
+    success, msg = update_ledger_entry(
+        row_num, date_str, name, entry_type,
+        revenue, expenditures, investment, salary, payment_method
+    )
+    
+    if success:
+        flash('Entry updated successfully!', 'success')
+    else:
+        flash(f'Error: {msg}', 'danger')
+    
+    return redirect(url_for('ledger'))
+
+@app.route('/ledger/delete/<int:row_num>', methods=['POST'])
+@login_required
+def ledger_delete(row_num):
+    success, msg = delete_ledger_entry(row_num)
+    if success:
+        flash('Entry deleted successfully!', 'success')
+    else:
+        flash(f'Error: {msg}', 'danger')
+    return redirect(url_for('ledger'))
+
+@app.route('/ledger/export')
+@login_required
+def ledger_export():
+    from ledger_utils import EXCEL_PATH
+    return send_file(
+        EXCEL_PATH, 
+        as_attachment=True, 
+        download_name=f"Redwed_Ledger_{datetime.now().strftime('%Y_%m_%d')}.xlsx"
+    )
+
+@app.route('/api/ledger/summary')
+@login_required
+def ledger_summary_api():
+    """API endpoint for ledger monthly summary (used by dashboard)."""
+    _, monthly_summary = read_ledger('2026')
+    return jsonify(monthly_summary)
+
+@app.route('/events')
+@login_required
+def events():
+    return render_template('events.html')
+
+# ==========================================
+# DASHBOARD ROUTE
+# ==========================================
+@app.route('/dashboard')
 @login_required
 def dashboard():
     # Fetch Counts
