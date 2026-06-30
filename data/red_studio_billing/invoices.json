@@ -531,5 +531,46 @@
     "balance_due": 37.79,
     "created_at": "__datetime__:2026-06-25T10:16:20.565320",
     "_id": "5d15ddef03f5472bac7fb1ff"
+  },
+  {
+    "invoice_number": "10020",
+    "invoice_date": "__datetime__:2026-06-30T00:00:00",
+    "due_date": "__datetime__:2026-07-30T00:00:00",
+    "payment_terms": "Cash",
+    "payment_days": "30",
+    "po_number": "",
+    "salesperson": "",
+    "shipping_address": "",
+    "public_note": "",
+    "private_note": "",
+    "foot_note": "",
+    "customer": {
+      "customer_id": "6a23e660efc99349da7f43de",
+      "name": "Test Customer",
+      "phone": "1234567890",
+      "email": "",
+      "address": "Phone: 1234567890\r\n       Phone: 1234567890\r\n      Phone: 1234567890\r\n     Phone: 1234567890\r\n    Phone: 1234567890\r\n   Phone: 1234567890\r\n  Phone: 1234567890\r\n Phone: 1234567890\r\nPhone: 1234567890"
+    },
+    "items": [
+      {
+        "product_id": "6a226b4b03ed29cb9cb8722f",
+        "product_name": "112",
+        "product_code": "112",
+        "description": "112",
+        "quantity": 1,
+        "price": 45.0,
+        "discount_pct": 0.0,
+        "discount_amount": 0.0,
+        "subtotal": 45.0
+      }
+    ],
+    "subtotal": 45.0,
+    "tax_rate": 18.0,
+    "tax_amount": 8.1,
+    "grand_total": 53.1,
+    "amount_paid": 0.0,
+    "balance_due": 53.1,
+    "created_at": "__datetime__:2026-06-30T04:55:51.951501",
+    "_id": "d7bbeb257e4d4cc89779ab70"
   }
 ]

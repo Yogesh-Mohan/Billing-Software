@@ -47,6 +47,113 @@ def _parse_date(val):
     return ''
 
 
+def _parse_and_cache(wb, year_sheet, current_mtime):
+    cache_key = f'ledger_{year_sheet}'
+    json_cache_path = os.path.join(os.path.dirname(__file__), f'{cache_key}.json')
+    ws = wb[year_sheet]
+    
+    entries = []
+    current_month = None
+    current_month_num = None
+    entry_id = 0
+    empty_streak = 0  # Track consecutive empty rows for early exit
+    
+    # Parse amounts safely
+    def safe_float(v):
+        if v is None or v == '' or v == ' ':
+            return 0.0
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            return 0.0
+    
+    MAX_EMPTY_STREAK = 30
+    MAX_SCAN_ROW = 500
+    
+    for row_idx, row in enumerate(ws.iter_rows(min_row=10, max_row=MAX_SCAN_ROW, max_col=9, values_only=False), start=10):
+        row_data = [cell.value for cell in row]
+        
+        month_val = _normalize_month(row_data[0])
+        if month_val:
+            current_month = MONTH_NAMES[month_val]
+            current_month_num = month_val
+            empty_streak = 0
+        
+        name = row_data[2]
+        revenue = row_data[4]
+        expenditures = row_data[5]
+        investment = row_data[6]
+        salary = row_data[7]
+        
+        has_data = name or any(
+            v is not None and v != '' and v != ' '
+            for v in [revenue, expenditures, investment, salary]
+        )
+        
+        if not has_data and not month_val:
+            empty_streak += 1
+            if empty_streak >= MAX_EMPTY_STREAK:
+                break
+            continue
+        else:
+            empty_streak = 0
+        
+        if has_data and current_month:
+            if row_data[0] and not any(v for v in row_data[1:]):
+                continue
+                
+            entry_id += 1
+            entries.append({
+                'id': entry_id,
+                'row': row_idx,
+                'month': current_month,
+                'month_num': current_month_num,
+                'date': _parse_date(row_data[1]),
+                'name': str(name).strip() if name else '',
+                'type': str(row_data[3]).strip() if row_data[3] else '',
+                'revenue': safe_float(revenue),
+                'expenditures': safe_float(expenditures),
+                'investment': safe_float(investment),
+                'salary': safe_float(salary),
+                'payment_method': str(row_data[8]).strip() if row_data[8] else '',
+            })
+    
+    # Calculate monthly summary
+    monthly_summary = {}
+    for entry in entries:
+        m = entry['month']
+        if m not in monthly_summary:
+            monthly_summary[m] = {
+                'month': m,
+                'month_num': entry['month_num'],
+                'revenue': 0, 'expenditures': 0,
+                'investment': 0, 'salary': 0
+            }
+        monthly_summary[m]['revenue'] += entry['revenue']
+        monthly_summary[m]['expenditures'] += entry['expenditures']
+        monthly_summary[m]['investment'] += entry['investment']
+        monthly_summary[m]['salary'] += entry['salary']
+    
+    sorted_summary = dict(sorted(monthly_summary.items(), key=lambda x: x[1]['month_num']))
+    
+    # Store in memory cache
+    result = (entries, sorted_summary)
+    _cache[cache_key] = result
+    _cache_mtime[cache_key] = current_mtime
+    
+    # Store in JSON cache for next time
+    try:
+        with open(json_cache_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                'mtime': current_mtime,
+                'entries': entries,
+                'summary': sorted_summary
+            }, f)
+    except Exception as e:
+        print("Failed to write JSON cache:", e)
+        
+    return result
+
 def read_ledger(year_sheet='2026'):
     """
     Read all ledger entries from the Excel file.
@@ -86,118 +193,8 @@ def read_ledger(year_sheet='2026'):
         wb.close()
         return [], {}
     
-    ws = wb[year_sheet]
-    
-    entries = []
-    current_month = None
-    current_month_num = None
-    entry_id = 0
-    empty_streak = 0  # Track consecutive empty rows for early exit
-    
-    # Parse amounts safely
-    def safe_float(v):
-        if v is None or v == '' or v == ' ':
-            return 0.0
-        try:
-            return float(v)
-        except (ValueError, TypeError):
-            return 0.0
-    
-    # Data starts at row 10, columns: A=Month, B=Date, C=Name, D=Type, 
-    # E=Revenue, F=Expenditures, G=Investment, H=Salary, I=Payment Method
-    # HARD LIMIT: Data ends ~row 400, but max_row is 50K+ due to Excel formatting.
-    # Cap at 500 to avoid scanning empty rows.
-    MAX_EMPTY_STREAK = 30
-    MAX_SCAN_ROW = 500
-    
-    for row_idx, row in enumerate(ws.iter_rows(min_row=10, max_row=MAX_SCAN_ROW, max_col=9, values_only=False), start=10):
-        row_data = [cell.value for cell in row]
-        
-        # Check if this row has a month marker
-        month_val = _normalize_month(row_data[0])
-        if month_val:
-            current_month = MONTH_NAMES[month_val]
-            current_month_num = month_val
-            empty_streak = 0
-        
-        # Check if row has any actual data (name or amounts)
-        name = row_data[2]
-        revenue = row_data[4]
-        expenditures = row_data[5]
-        investment = row_data[6]
-        salary = row_data[7]
-        
-        has_data = name or any(
-            v is not None and v != '' and v != ' '
-            for v in [revenue, expenditures, investment, salary]
-        )
-        
-        if not has_data and not month_val:
-            empty_streak += 1
-            if empty_streak >= MAX_EMPTY_STREAK:
-                break  # Stop scanning — no more data
-            continue
-        else:
-            empty_streak = 0
-        
-        if has_data and current_month:
-            # Skip if this is a month-only marker row
-            if row_data[0] and not any(v for v in row_data[1:]):
-                continue
-                
-            entry_id += 1
-            
-            entries.append({
-                'id': entry_id,
-                'row': row_idx,
-                'month': current_month,
-                'month_num': current_month_num,
-                'date': _parse_date(row_data[1]),
-                'name': str(name).strip() if name else '',
-                'type': str(row_data[3]).strip() if row_data[3] else '',
-                'revenue': safe_float(revenue),
-                'expenditures': safe_float(expenditures),
-                'investment': safe_float(investment),
-                'salary': safe_float(salary),
-                'payment_method': str(row_data[8]).strip() if row_data[8] else '',
-            })
-    
+    result = _parse_and_cache(wb, year_sheet, current_mtime)
     wb.close()
-    
-    # Calculate monthly summary
-    monthly_summary = {}
-    for entry in entries:
-        m = entry['month']
-        if m not in monthly_summary:
-            monthly_summary[m] = {
-                'month': m,
-                'month_num': entry['month_num'],
-                'revenue': 0, 'expenditures': 0,
-                'investment': 0, 'salary': 0
-            }
-        monthly_summary[m]['revenue'] += entry['revenue']
-        monthly_summary[m]['expenditures'] += entry['expenditures']
-        monthly_summary[m]['investment'] += entry['investment']
-        monthly_summary[m]['salary'] += entry['salary']
-    
-    # Sort summary by month number
-    sorted_summary = dict(sorted(monthly_summary.items(), key=lambda x: x[1]['month_num']))
-    
-    # Store in memory cache
-    result = (entries, sorted_summary)
-    _cache[cache_key] = result
-    _cache_mtime[cache_key] = current_mtime
-    
-    # Store in JSON cache for next time
-    try:
-        with open(json_cache_path, 'w', encoding='utf-8') as f:
-            json.dump({
-                'mtime': current_mtime,
-                'entries': entries,
-                'summary': sorted_summary
-            }, f)
-    except Exception as e:
-        print("Failed to write JSON cache:", e)
     
     print(f"CACHE LOADED AND SAVED IN {time.time() - t0:.2f} seconds")
     return result
@@ -301,9 +298,15 @@ def add_ledger_entry(month_num, date_str, name, entry_type, revenue, expenditure
     ws.cell(row=insert_row, column=9, value=payment_method if payment_method else None)
     
     wb.save(EXCEL_PATH)
+    
+    # Update cache immediately so next page load is instant
+    try:
+        new_mtime = os.path.getmtime(EXCEL_PATH)
+        _parse_and_cache(wb, year_sheet, new_mtime)
+    except Exception as e:
+        print("Error updating cache after add:", e)
+        
     wb.close()
-    _cache.clear()
-    _cache_mtime.clear()
     
     return True, "Entry added successfully"
 
@@ -344,9 +347,15 @@ def update_ledger_entry(row_num, date_str, name, entry_type, revenue, expenditur
     ws.cell(row=row_num, column=9, value=payment_method if payment_method else None)
     
     wb.save(EXCEL_PATH)
+    
+    # Update cache immediately
+    try:
+        new_mtime = os.path.getmtime(EXCEL_PATH)
+        _parse_and_cache(wb, year_sheet, new_mtime)
+    except Exception as e:
+        print("Error updating cache after update:", e)
+        
     wb.close()
-    _cache.clear()
-    _cache_mtime.clear()
     
     return True, "Entry updated successfully"
 
@@ -361,10 +370,14 @@ def delete_ledger_entry(row_num, year_sheet='2026'):
     ws.delete_rows(row_num)
     
     wb.save(EXCEL_PATH)
-    wb.close()
     
-    # Invalidate cache
-    _cache.clear()
-    _cache_mtime.clear()
+    # Update cache immediately
+    try:
+        new_mtime = os.path.getmtime(EXCEL_PATH)
+        _parse_and_cache(wb, year_sheet, new_mtime)
+    except Exception as e:
+        print("Error updating cache after delete:", e)
+        
+    wb.close()
     
     return True, "Entry deleted successfully"
