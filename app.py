@@ -1819,6 +1819,34 @@ def settings():
         
     return render_template('settings.html', settings=settings_doc)
 
+@app.route('/seed_events_prod')
+def seed_events_prod():
+    try:
+        import json
+        import os
+        events_path = os.path.join(app.root_path, 'data', 'red_studio_billing', 'events.json')
+        if not os.path.exists(events_path):
+            return "events.json not found", 404
+            
+        with open(events_path, 'r', encoding='utf-8') as f:
+            events = json.load(f)
+            
+        # Optional: clear existing events first
+        # db.events.delete_many({})
+        
+        inserted = 0
+        for ev in events:
+            if '_id' in ev:
+                ev['_id'] = str(ev['_id'])
+            # Check if event already exists to avoid duplicates
+            if not db.events.find_one({'serial_no': ev.get('serial_no')}):
+                db.events.insert_one(ev)
+                inserted += 1
+            
+        return f"Successfully seeded {inserted} events to the production database! You can now go back to the app."
+    except Exception as e:
+        return f"Error: {e}", 500
+
 if __name__ == '__main__':
     # Initialize port and debug modes
     app.run(host='0.0.0.0', port=5000, debug=True)
