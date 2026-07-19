@@ -178,7 +178,8 @@ def read_ledger(year_sheet='2026'):
         if os.path.exists(json_cache_path):
             with open(json_cache_path, 'r', encoding='utf-8') as f:
                 cached_data = json.load(f)
-                if cached_data.get('mtime') == current_mtime:
+                # If Excel is missing (mtime=0) or matches, use cache
+                if current_mtime == 0 or cached_data.get('mtime') == current_mtime:
                     print("CACHE HIT (JSON Disk)")
                     _cache[cache_key] = (cached_data['entries'], cached_data['summary'])
                     _cache_mtime[cache_key] = current_mtime
