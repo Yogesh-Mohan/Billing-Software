@@ -250,7 +250,81 @@ def ledger_summary_api():
 @app.route('/events')
 @login_required
 def events():
-    return render_template('events.html')
+    events_cursor = db.events.find({})
+    events_list = list(events_cursor) if events_cursor else []
+    
+    # Sort events by serial_no to match Excel order
+    def get_serial(e):
+        try:
+            return int(e.get('serial_no', 0))
+        except (ValueError, TypeError):
+            return 999999
+            
+    events_list.sort(key=get_serial)
+    
+    return render_template('events.html', events=events_list)
+
+@app.route('/events/add', methods=['POST'])
+@login_required
+def add_event():
+    try:
+        new_event = {
+            'customer_name': request.form.get('customer_name', '').strip(),
+            'serial_no': request.form.get('serial_no', '').strip(),
+            'event_type': request.form.get('event_type', '').strip(),
+            'date': request.form.get('date', '').strip(),
+            'venue': request.form.get('venue', '').strip(),
+            'package': request.form.get('package', '').strip(),
+            'acquisition': request.form.get('acquisition', '').strip(),
+            'booking_date': request.form.get('booking_date', '').strip(),
+            'budget': request.form.get('budget', '').strip(),
+            'payment': request.form.get('payment', '').strip(),
+            'pending': request.form.get('pending', '').strip(),
+            'client_number': request.form.get('client_number', '').strip(),
+            'client_address': request.form.get('client_address', '').strip(),
+            'editor': request.form.get('editor', '').strip(),
+            'album_image': request.form.get('album_image', '').strip(),
+            'bill': request.form.get('bill', '').strip(),
+            'persons_went': request.form.get('persons_went', '').strip(),
+            'file_location': request.form.get('file_location', '').strip(),
+        }
+        db.events.insert_one(new_event)
+        flash('New event added successfully!', 'success')
+    except Exception as e:
+        flash(f'Error adding event: {e}', 'danger')
+    
+    return redirect(url_for('events'))
+
+@app.route('/events/edit/<event_id>', methods=['POST'])
+@login_required
+def edit_event(event_id):
+    try:
+        updated_event = {
+            'customer_name': request.form.get('customer_name', '').strip(),
+            'serial_no': request.form.get('serial_no', '').strip(),
+            'event_type': request.form.get('event_type', '').strip(),
+            'date': request.form.get('date', '').strip(),
+            'venue': request.form.get('venue', '').strip(),
+            'package': request.form.get('package', '').strip(),
+            'acquisition': request.form.get('acquisition', '').strip(),
+            'booking_date': request.form.get('booking_date', '').strip(),
+            'budget': request.form.get('budget', '').strip(),
+            'payment': request.form.get('payment', '').strip(),
+            'pending': request.form.get('pending', '').strip(),
+            'client_number': request.form.get('client_number', '').strip(),
+            'client_address': request.form.get('client_address', '').strip(),
+            'editor': request.form.get('editor', '').strip(),
+            'album_image': request.form.get('album_image', '').strip(),
+            'bill': request.form.get('bill', '').strip(),
+            'persons_went': request.form.get('persons_went', '').strip(),
+            'file_location': request.form.get('file_location', '').strip(),
+        }
+        db.events.update_one({'_id': ObjectId(event_id)}, {'$set': updated_event})
+        flash('Event updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating event: {e}', 'danger')
+    
+    return redirect(url_for('events'))
 
 # ==========================================
 # DASHBOARD ROUTE

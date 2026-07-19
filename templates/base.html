@@ -15,14 +15,17 @@
 <body>
 
     <!-- Responsive Toggle Button (Mobile Only) -->
+    {% if request.endpoint not in ['events', 'ledger'] %}
     <div class="no-print d-lg-none p-3 bg-white border-bottom border-secondary d-flex justify-content-between align-items-center">
         <h4 class="m-0 text-dark font-weight-bold">RED <span>STUDIO</span></h4>
         <button class="btn btn-outline-secondary btn-sm" id="sidebarToggle">
             <i class="fas fa-bars"></i>
         </button>
     </div>
+    {% endif %}
 
     <!-- Sidebar Navigation -->
+    {% if request.endpoint not in ['events', 'ledger'] %}
     <div class="sidebar no-print">
         <div class="sidebar-brand">
             <!-- Fix #15: Use dynamic business name from settings -->
@@ -42,6 +45,11 @@
             <li class="sidebar-item">
                 <a href="{{ url_for('items') }}" class="sidebar-link {% if request.endpoint == 'items' %}active{% endif %}">
                     <i class="fas fa-list"></i> Items
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('ledger') }}" class="sidebar-link {% if request.endpoint == 'ledger' %}active{% endif %}">
+                    <i class="fas fa-book"></i> Ledger
                 </a>
             </li>
             <hr class="my-2 border-secondary opacity-25">
@@ -74,9 +82,10 @@
             </li>
         </ul>
     </div>
+    {% endif %}
 
     <!-- Main Content Panel -->
-    <div class="main-content">
+    <div class="main-content" {% if request.endpoint in ['events', 'ledger'] %}style="margin-left: 0; width: 100%; padding-top: 2rem;"{% endif %}>
         <!-- Messages & Alerts -->
         <div class="container-fluid no-print">
             {% with messages = get_flashed_messages(with_categories=true) %}

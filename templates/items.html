@@ -211,7 +211,7 @@
                                     data-warn="{{ item.warning_qty|default(0, true) }}"
                                     data-manage="{{ 'true' if item.manage_stock else 'false' }}"
                                     onclick="editItem(this.dataset.id, this.dataset.code, this.dataset.name, this.dataset.desc, this.dataset.qty, this.dataset.price, this.dataset.tax, this.dataset.supplier, this.dataset.note, this.dataset.curr, this.dataset.ideal, this.dataset.warn, this.dataset.manage === 'true')">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-pen"></i>
                             </button>
                             <form method="POST" action="{{ url_for('delete_item', item_id=item._id) }}" style="display:inline;">
                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this item?')">

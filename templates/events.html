@@ -3,20 +3,580 @@
 {% block title %}Event Management{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-calendar-alt text-primary me-2"></i> Event Management</h2>
-    <a href="{{ url_for('hub') }}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-1"></i> Back to Hub
-    </a>
-</div>
-
-<div class="card shadow-sm border-0 mb-4">
-    <div class="card-body py-5 text-center">
-        <div class="display-1 text-muted opacity-25 mb-3">
-            <i class="fas fa-tools"></i>
-        </div>
-        <h3 class="font-weight-bold">Event Management Under Construction</h3>
-        <p class="text-muted">This module will allow you to organize, schedule, and track all your events.</p>
+<div class="ledger-header d-flex justify-content-between align-items-center mb-4">
+    <h2 class="ledger-title mb-0"><i class="fas fa-calendar-check me-2"></i> Event Management</h2>
+    <div>
+        <button class="btn btn-gradient rounded-pill shadow-sm me-2" data-bs-toggle="modal" data-bs-target="#addEventModal">
+            <i class="fas fa-plus me-1"></i> Add New Event
+        </button>
+        <a href="{{ url_for('hub') }}" class="btn btn-outline-light rounded-pill shadow-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Hub
+        </a>
     </div>
 </div>
+
+{% if events %}
+<div class="accordion" id="eventsAccordion">
+    {% for event in events %}
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="heading{{ loop.index }}">
+            <button class="accordion-button collapsed py-4 fs-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                <div class="d-flex w-100 justify-content-between align-items-center me-3">
+                    <span class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 50px; height: 50px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        {{ event.customer_name }}
+                    </span>
+                </div>
+            </button>
+        </h2>
+        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#eventsAccordion">
+            <div class="accordion-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0 align-top events-table">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4">Date</th>
+                                <th class="py-3 px-3">Acquisition</th>
+                                <th class="py-3 px-3">Event Type</th>
+                                <th class="py-3 px-3">Package</th>
+                                <th class="py-3 px-3">Budget</th>
+                                <th class="py-3 px-3">Booking Date</th>
+                                <th class="py-3 px-3">Venue</th>
+                                <th class="py-3 px-3">Payment</th>
+                                <th class="py-3 px-3">Pending</th>
+                                <th class="py-3 px-3">Client Number</th>
+                                <th class="py-3 px-3">Client Address</th>
+                                <th class="py-3 px-3">Editor</th>
+                                <th class="py-3 px-3">Album Image</th>
+                                <th class="py-3 px-3">Bill</th>
+                                <th class="py-3 px-3">Persons Went</th>
+                                <th class="py-3 px-3 text-center">Location Link</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="px-4 text-nowrap">{{ event.date | replace(' 00:00:00', '') if event.date else '-' }}</td>
+                                <td class="px-3">{{ event.acquisition if event.acquisition else '-' }}</td>
+                                <td class="px-3"><span class="text-primary fw-semibold">{{ event.event_type if event.event_type else '-' }}</span></td>
+                                <td class="px-3">{{ event.package if event.package else '-' }}</td>
+                                <td class="px-3 fw-semibold text-success">{{ event.budget if event.budget else '-' }}</td>
+                                <td class="px-3 text-nowrap">{{ event.booking_date | replace(' 00:00:00', '') if event.booking_date else '-' }}</td>
+                                <td class="px-3">{{ event.venue if event.venue else '-' }}</td>
+                                <td class="px-3">{{ event.payment if event.payment else '-' }}</td>
+                                <td class="px-3 fw-semibold text-danger">{{ event.pending if event.pending else '-' }}</td>
+                                <td class="px-3">
+                                    {% if event.client_number %}
+                                    <a href="tel:{{ event.client_number }}" class="text-decoration-none"><i class="fas fa-phone-alt me-1 small"></i> {{ event.client_number }}</a>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 text-wrap" style="min-width: 250px;">{{ event.client_address if event.client_address else '-' }}</td>
+                                <td class="px-3">{{ event.editor if event.editor else '-' }}</td>
+                                <td class="px-3">{{ event.album_image if event.album_image else '-' }}</td>
+                                <td class="px-3">{{ event.bill if event.bill else '-' }}</td>
+                                <td class="px-3">{{ event.persons_went if event.persons_went else '-' }}</td>
+                                <td class="px-3 text-center">
+                                    {% if event.file_location %}
+                                    <a href="{{ event.file_location }}" target="_blank" class="text-primary text-decoration-none"><i class="fas fa-external-link-alt"></i></a>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="p-3 bg-light border-top text-end">
+                    <button class="btn btn-sm btn-outline-primary rounded-pill px-4 shadow-sm"
+                            data-bs-toggle="modal" data-bs-target="#editEventModal"
+                            data-id="{{ event._id }}"
+                            data-customer="{{ event.customer_name }}"
+                            data-serial="{{ event.serial_no }}"
+                            data-type="{{ event.event_type }}"
+                            data-date="{{ event.date | replace(' 00:00:00', '') }}"
+                            data-venue="{{ event.venue }}"
+                            data-package="{{ event.package }}"
+                            data-acquisition="{{ event.acquisition }}"
+                            data-booking="{{ event.booking_date | replace(' 00:00:00', '') }}"
+                            data-budget="{{ event.budget }}"
+                            data-payment="{{ event.payment }}"
+                            data-pending="{{ event.pending }}"
+                            data-client_number="{{ event.client_number }}"
+                            data-client_address="{{ event.client_address }}"
+                            data-editor="{{ event.editor }}"
+                            data-album_image="{{ event.album_image }}"
+                            data-bill="{{ event.bill }}"
+                            data-persons_went="{{ event.persons_went }}"
+                            data-file_location="{{ event.file_location }}"
+                            title="Edit Event">
+                        <i class="fas fa-pen me-1"></i> Edit Event
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card shadow-sm border-0 mb-4 rounded-4 text-center py-5">
+    <div class="card-body">
+        <div class="display-1 text-muted opacity-25 mb-3">
+            <i class="fas fa-box-open"></i>
+        </div>
+        <h4 class="font-weight-bold">No Events Found</h4>
+        <p class="text-muted mb-0">No events have been imported or created yet.</p>
+    </div>
+</div>
+{% endif %}
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* ===== PREMIUM EVENT UI STYLES ===== */
+    body {
+        background-color: #0f172a;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+        background-attachment: fixed;
+        font-family: 'Outfit', sans-serif;
+        color: #f8fafc;
+    }
+    
+    /* Header Section */
+    .ledger-header {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-radius: 1.5rem;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+    .ledger-title {
+        color: #f8fafc;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .ledger-title i {
+        background: linear-gradient(135deg, #34d399, #10b981);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Accordion Styling */
+    .accordion-item {
+        background: rgba(30, 41, 59, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.05) !important;
+        border-radius: 1.25rem !important;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+    }
+    .accordion-button {
+        background: transparent !important;
+        color: #f8fafc !important;
+        box-shadow: none !important;
+    }
+    .accordion-button::after {
+        filter: invert(1);
+    }
+    .accordion-body {
+        background: rgba(15, 23, 42, 0.5) !important;
+        border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    /* Table Styling */
+    .events-table { color: #e2e8f0; }
+    .events-table thead th {
+        background: rgba(15, 23, 42, 0.9);
+        color: #94a3b8;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.85rem !important;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding: 1rem 1.5rem;
+    }
+    .events-table td {
+        white-space: pre-line !important;
+        vertical-align: top;
+        padding: 1.25rem 1.5rem !important;
+        font-size: 1.05rem;
+        line-height: 1.7;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .events-table tbody tr:hover {
+        background-color: rgba(255,255,255,0.02) !important;
+    }
+    .events-table td.text-success { color: #10b981 !important; }
+    .events-table td.text-danger { color: #ef4444 !important; }
+
+    /* Buttons */
+    .btn-gradient {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-gradient:hover {
+        background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        background: #0f172a;
+        color: #f8fafc;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .modal-header {
+        background: rgba(30, 41, 59, 0.9);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .modal-body { background: #0f172a; }
+    .modal-footer {
+        background: rgba(30, 41, 59, 0.9);
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .form-control {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #f8fafc;
+    }
+    .form-control:focus {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: #3b82f6;
+        color: #f8fafc;
+        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+    }
+    .form-label { color: #94a3b8 !important; }
+</style>
+
+<!-- Edit Event Modal -->
+<!-- ADD EVENT MODAL -->
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <form id="addEventForm" method="POST" action="{{ url_for('add_event') }}" onsubmit="prepareAddSubmit()">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="addEventModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i> Add New Event
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Client Details Row -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Customer Name</label>
+                            <input type="text" class="form-control rounded-3" name="customer_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Serial No</label>
+                            <input type="text" class="form-control rounded-3" name="serial_no">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Client Number</label>
+                            <input type="text" class="form-control rounded-3" name="client_number">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Client Address</label>
+                            <input type="text" class="form-control rounded-3" name="client_address">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Budget</label>
+                            <input type="text" class="form-control rounded-3 text-success fw-bold" name="budget">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Pending</label>
+                            <input type="text" class="form-control rounded-3 text-danger fw-bold" name="pending">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Acquisition</label>
+                            <input type="text" class="form-control rounded-3" name="acquisition">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Editor</label>
+                            <input type="text" class="form-control rounded-3" name="editor">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Album Image</label>
+                            <input type="text" class="form-control rounded-3" name="album_image">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Bill</label>
+                            <input type="text" class="form-control rounded-3" name="bill">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary">Persons Went</label>
+                            <input type="text" class="form-control rounded-3" name="persons_went">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold text-secondary">File Location Link</label>
+                            <input type="url" class="form-control rounded-3" name="file_location">
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields to store newline-joined data -->
+                    <input type="hidden" name="date" id="add_date">
+                    <input type="hidden" name="event_type" id="add_event_type">
+                    <input type="hidden" name="package" id="add_package">
+                    <input type="hidden" name="venue" id="add_venue">
+                    <input type="hidden" name="payment" id="add_payment">
+                    <input type="hidden" name="booking_date" id="add_booking_date">
+
+                    <!-- Dynamic Sub-Events Grid -->
+                    <h6 class="fw-bold mb-3 mt-2" style="color: #38bdf8;"><i class="fas fa-layer-group me-1"></i> Event Details & Payments</h6>
+                    <div class="table-responsive rounded-3 border border-secondary border-opacity-25">
+                        <table class="table table-borderless align-middle mb-0" id="addEventGrid">
+                            <thead class="border-bottom border-secondary border-opacity-25 text-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Package</th>
+                                    <th>Venue</th>
+                                    <th>Payment</th>
+                                    <th>Booking Date</th>
+                                    <th class="text-center" style="width: 60px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="addEventRows">
+                                <!-- Default empty row -->
+                                <tr class="border-bottom">
+                                    <td><input type="text" class="form-control form-control-sm dynamic-add-date"></td>
+                                    <td><input type="text" class="form-control form-control-sm dynamic-add-type"></td>
+                                    <td><input type="text" class="form-control form-control-sm dynamic-add-package"></td>
+                                    <td><input type="text" class="form-control form-control-sm dynamic-add-venue"></td>
+                                    <td><input type="text" class="form-control form-control-sm dynamic-add-payment text-success"></td>
+                                    <td><input type="text" class="form-control form-control-sm dynamic-add-booking"></td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary mt-2 shadow-sm rounded-pill" onclick="addNewAddRow()">
+                        <i class="fas fa-plus"></i> Add Row
+                    </button>
+                </div>
+                <div class="modal-footer px-4 py-3">
+                    <button type="button" class="btn btn-outline-light shadow-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-gradient shadow-sm fw-bold px-4">Create Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="editEventModalLabel">
+                    <i class="fas fa-edit me-2"></i> Edit Event
+                </h5>
+                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editEventForm" method="POST" action="" onsubmit="prepareSubmit()">
+                <!-- Hidden fields for multi-line data -->
+                <input type="hidden" name="date" id="hidden_date">
+                <input type="hidden" name="event_type" id="hidden_event_type">
+                <input type="hidden" name="package" id="hidden_package">
+                <input type="hidden" name="venue" id="hidden_venue">
+                <input type="hidden" name="payment" id="hidden_payment">
+                
+                <div class="modal-body px-4 py-4">
+                    <div class="row g-3">
+                        <!-- Standard Single-Line Fields -->
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-uppercase">Customer Name</label>
+                            <input type="text" class="form-control rounded-3" name="customer_name" id="edit_customer_name" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold text-uppercase">Serial No</label>
+                            <input type="text" class="form-control rounded-3" name="serial_no" id="edit_serial_no">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Client Number</label>
+                            <input type="text" class="form-control rounded-3" name="client_number" id="edit_client_number">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Client Address</label>
+                            <input type="text" class="form-control rounded-3" name="client_address" id="edit_client_address">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Acquisition</label>
+                            <input type="text" class="form-control rounded-3" name="acquisition" id="edit_acquisition">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Booking Date</label>
+                            <input type="text" class="form-control rounded-3" name="booking_date" id="edit_booking_date">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Budget</label>
+                            <input type="text" class="form-control rounded-3 text-success fw-bold" name="budget" id="edit_budget">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Pending Amount</label>
+                            <input type="text" class="form-control rounded-3 text-danger fw-bold" name="pending" id="edit_pending">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Editor</label>
+                            <input type="text" class="form-control rounded-3" name="editor" id="edit_editor">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Album Image</label>
+                            <input type="text" class="form-control rounded-3" name="album_image" id="edit_album_image">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Bill</label>
+                            <input type="text" class="form-control rounded-3" name="bill" id="edit_bill">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold text-uppercase">Persons Went</label>
+                            <input type="text" class="form-control rounded-3" name="persons_went" id="edit_persons_went">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold text-uppercase">File Location Link</label>
+                            <input type="url" class="form-control rounded-3" name="file_location" id="edit_file_location">
+                        </div>
+
+                        <!-- Dynamic Multi-Line Grid -->
+                        <div class="col-12 mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label small fw-bold text-uppercase mb-0" style="color: #38bdf8;">Event Details & Payments</label>
+                                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="addDynamicRow()">
+                                    <i class="fas fa-plus me-1"></i> Add Row
+                                </button>
+                            </div>
+                            <div class="table-responsive rounded-3 border border-secondary border-opacity-25">
+                                <table class="table table-borderless table-hover mb-0 align-middle" id="dynamicEventTable">
+                                    <thead class="border-bottom border-secondary border-opacity-25 text-light small text-uppercase">
+                                        <tr>
+                                            <th class="fw-semibold">Date</th>
+                                            <th class="fw-semibold">Event Type</th>
+                                            <th class="fw-semibold">Package</th>
+                                            <th class="fw-semibold">Venue</th>
+                                            <th class="fw-semibold">Payment</th>
+                                            <th width="40"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dynamicEventBody">
+                                        <!-- Rows generated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer px-4 py-3">
+                    <button type="button" class="btn btn-outline-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-gradient rounded-pill px-4">
+                        <i class="fas fa-save me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function addDynamicRow(date='', type='', pkg='', venue='', payment='') {
+    const tbody = document.getElementById('dynamicEventBody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm dyn-date" value="${date}"></td>
+        <td><input type="text" class="form-control form-control-sm dyn-type" value="${type}"></td>
+        <td><input type="text" class="form-control form-control-sm dyn-pkg" value="${pkg}"></td>
+        <td><input type="text" class="form-control form-control-sm dyn-venue" value="${venue}"></td>
+        <td><input type="text" class="form-control form-control-sm dyn-payment" value="${payment}"></td>
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="this.closest('tr').remove()">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function prepareSubmit() {
+    // Gather all rows and join with newlines
+    const dates = Array.from(document.querySelectorAll('.dyn-date')).map(el => el.value);
+    const types = Array.from(document.querySelectorAll('.dyn-type')).map(el => el.value);
+    const pkgs = Array.from(document.querySelectorAll('.dyn-pkg')).map(el => el.value);
+    const venues = Array.from(document.querySelectorAll('.dyn-venue')).map(el => el.value);
+    const payments = Array.from(document.querySelectorAll('.dyn-payment')).map(el => el.value);
+
+    document.getElementById('hidden_date').value = dates.join('\n');
+    document.getElementById('hidden_event_type').value = types.join('\n');
+    document.getElementById('hidden_package').value = pkgs.join('\n');
+    document.getElementById('hidden_venue').value = venues.join('\n');
+    document.getElementById('hidden_payment').value = payments.join('\n');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var editEventModal = document.getElementById('editEventModal');
+    if (editEventModal) {
+        editEventModal.addEventListener('show.bs.modal', function(event) {
+            var button = event.relatedTarget;
+            var eventId = button.getAttribute('data-id');
+            var form = document.getElementById('editEventForm');
+            form.action = "/events/edit/" + eventId;
+            
+            // Standard fields
+            document.getElementById('edit_customer_name').value = button.getAttribute('data-customer') || '';
+            document.getElementById('edit_serial_no').value = button.getAttribute('data-serial') || '';
+            document.getElementById('edit_acquisition').value = button.getAttribute('data-acquisition') || '';
+            document.getElementById('edit_booking_date').value = button.getAttribute('data-booking') || '';
+            document.getElementById('edit_budget').value = button.getAttribute('data-budget') || '';
+            document.getElementById('edit_pending').value = button.getAttribute('data-pending') || '';
+            document.getElementById('edit_client_number').value = button.getAttribute('data-client_number') || '';
+            document.getElementById('edit_editor').value = button.getAttribute('data-editor') || '';
+            document.getElementById('edit_album_image').value = button.getAttribute('data-album_image') || '';
+            document.getElementById('edit_bill').value = button.getAttribute('data-bill') || '';
+            document.getElementById('edit_persons_went').value = button.getAttribute('data-persons_went') || '';
+            document.getElementById('edit_file_location').value = button.getAttribute('data-file_location') || '';
+            
+            // Clean up multi-line address
+            let addr = button.getAttribute('data-client_address') || '';
+            document.getElementById('edit_client_address').value = addr.replace(/\n/g, ' ');
+
+            // Multi-line fields parsing
+            const dates = (button.getAttribute('data-date') || '').split('\n');
+            const types = (button.getAttribute('data-type') || '').split('\n');
+            const pkgs = (button.getAttribute('data-package') || '').split('\n');
+            const venues = (button.getAttribute('data-venue') || '').split('\n');
+            const payments = (button.getAttribute('data-payment') || '').split('\n');
+            
+            // Find max length to generate rows
+            const maxRows = Math.max(dates.length, types.length, pkgs.length, venues.length, payments.length, 1);
+            
+            // Clear existing rows
+            document.getElementById('dynamicEventBody').innerHTML = '';
+            
+            // Add rows
+            for (let i = 0; i < maxRows; i++) {
+                addDynamicRow(
+                    dates[i] || '',
+                    types[i] || '',
+                    pkgs[i] || '',
+                    venues[i] || '',
+                    payments[i] || ''
+                );
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
