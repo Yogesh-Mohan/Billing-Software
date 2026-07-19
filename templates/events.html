@@ -57,12 +57,12 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td class="px-4 text-nowrap">{{ event.date | replace(' 00:00:00', '') if event.date else '-' }}</td>
+                                <td class="px-4" style="white-space: pre !important;">{{ event.date | replace(' 00:00:00', '') if event.date else '-' }}</td>
                                 <td class="px-3">{{ event.acquisition if event.acquisition else '-' }}</td>
                                 <td class="px-3"><span class="text-primary fw-semibold">{{ event.event_type if event.event_type else '-' }}</span></td>
                                 <td class="px-3">{{ event.package if event.package else '-' }}</td>
                                 <td class="px-3 fw-semibold text-success">{{ event.budget if event.budget else '-' }}</td>
-                                <td class="px-3 text-nowrap">{{ event.booking_date | replace(' 00:00:00', '') if event.booking_date else '-' }}</td>
+                                <td class="px-3" style="white-space: pre !important;">{{ event.booking_date | replace(' 00:00:00', '') if event.booking_date else '-' }}</td>
                                 <td class="px-3">{{ event.venue if event.venue else '-' }}</td>
                                 <td class="px-3">{{ event.payment if event.payment else '-' }}</td>
                                 <td class="px-3 fw-semibold text-danger">{{ event.pending if event.pending else '-' }}</td>
