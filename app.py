@@ -1824,9 +1824,9 @@ def seed_events_prod():
     try:
         import json
         import os
-        events_path = os.path.join(app.root_path, 'data', 'red_studio_billing', 'events.json')
+        events_path = os.path.join(app.root_path, 'export_events.json')
         if not os.path.exists(events_path):
-            return "events.json not found", 404
+            return "export_events.json not found", 404
             
         with open(events_path, 'r', encoding='utf-8') as f:
             events = json.load(f)
