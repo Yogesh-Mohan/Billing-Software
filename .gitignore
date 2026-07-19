@@ -7,8 +7,6 @@ __pycache__/
 billingsystem-*.json
 
 # Local envs / data
-data/
 instance/
 .web/
 *.log
-ledger_*.json
