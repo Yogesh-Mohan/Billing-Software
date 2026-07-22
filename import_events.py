@@ -89,7 +89,10 @@ def import_events():
     
     # Clear existing to avoid duplicates if run multiple times
     try:
-        db.events.delete_many({})
+        if hasattr(db.events, 'delete_many'):
+            db.events.delete_many({})
+        elif hasattr(db.events, '_write'):
+            db.events._write([])
     except Exception as e:
         print(f"Could not clear existing events: {e}")
     
