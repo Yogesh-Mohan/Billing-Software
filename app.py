@@ -65,6 +65,26 @@ if not USE_FIREBASE:
     print(f"[OK] File-based database ready at: {data_dir}")
 
 # Auto-seed events from export_events.json if events collection is empty
+def _clean_date_value(val):
+    """Clean date strings - remove __datetime__ prefix, time suffixes, fix formats."""
+    if not val or not isinstance(val, str):
+        return val
+    val = val.replace('__datetime__:', '')
+    lines = val.split('\n')
+    cleaned = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        # Remove T00:00:00 or  00:00:00
+        line = re.sub(r'[T ]00:00:00$', '', line)
+        # Convert dd.mm.yyyy to yyyy-mm-dd
+        match = re.match(r'^(\d{2})\.(\d{2})\.(\d{4})$', line)
+        if match:
+            line = f"{match.group(3)}-{match.group(2)}-{match.group(1)}"
+        cleaned.append(line)
+    return '\n'.join(cleaned)
+
 def _auto_seed_events():
     try:
         existing = list(db.events.find({}))
@@ -88,6 +108,10 @@ def _auto_seed_events():
         for ev in events_data:
             # Remove old _id so a new one is generated
             ev.pop('_id', None)
+            # Clean date fields
+            for date_field in ['date', 'booking_date']:
+                if date_field in ev:
+                    ev[date_field] = _clean_date_value(ev[date_field])
             try:
                 db.events.insert_one(ev)
                 inserted += 1
@@ -99,6 +123,7 @@ def _auto_seed_events():
         print(f"[WARN] Auto-seed events failed: {e}")
 
 _auto_seed_events()
+
 
 # Helper to check if user is logged in
 def login_required(f):
@@ -289,10 +314,21 @@ def events():
     events_cursor = db.events.find({})
     events_list = list(events_cursor) if events_cursor else []
     
+    # Clean date fields for display
+    for ev in events_list:
+        for date_field in ['date', 'booking_date']:
+            val = ev.get(date_field, '')
+            if val:
+                # Handle datetime objects
+                if hasattr(val, 'strftime'):
+                    ev[date_field] = val.strftime('%Y-%m-%d')
+                elif isinstance(val, str):
+                    ev[date_field] = _clean_date_value(val)
+    
     # Sort events by serial_no to match Excel order
     def get_serial(e):
         try:
-            return int(e.get('serial_no', 0))
+            return int(re.sub(r'[^0-9]', '', str(e.get('serial_no', '0'))))
         except (ValueError, TypeError):
             return 999999
             
