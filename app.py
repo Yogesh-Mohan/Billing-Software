@@ -64,6 +64,42 @@ if not USE_FIREBASE:
     db = client[app.config.get('DB_NAME', 'red_studio_billing')]
     print(f"[OK] File-based database ready at: {data_dir}")
 
+# Auto-seed events from export_events.json if events collection is empty
+def _auto_seed_events():
+    try:
+        existing = list(db.events.find({}))
+        if existing:
+            print(f"[OK] Events collection already has {len(existing)} records.")
+            return
+        
+        seed_file = os.path.join(app.root_path, 'export_events.json')
+        if not os.path.exists(seed_file):
+            print("[INFO] No export_events.json found for auto-seeding.")
+            return
+        
+        with open(seed_file, 'r', encoding='utf-8') as f:
+            events_data = json.load(f)
+        
+        if not events_data:
+            print("[INFO] export_events.json is empty.")
+            return
+        
+        inserted = 0
+        for ev in events_data:
+            # Remove old _id so a new one is generated
+            ev.pop('_id', None)
+            try:
+                db.events.insert_one(ev)
+                inserted += 1
+            except Exception as e:
+                print(f"[WARN] Failed to seed event: {e}")
+        
+        print(f"[OK] Auto-seeded {inserted} events from export_events.json")
+    except Exception as e:
+        print(f"[WARN] Auto-seed events failed: {e}")
+
+_auto_seed_events()
+
 # Helper to check if user is logged in
 def login_required(f):
     @wraps(f)
